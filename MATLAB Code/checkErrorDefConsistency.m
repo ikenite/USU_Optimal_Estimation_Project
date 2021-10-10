@@ -9,7 +9,6 @@ function checkErrorDefConsistency( xhat, x, simpar )
 % Example Usage
 % checkErrorDefConsistency( simpar, x )
 %
-
 % Author: Randy Christensen
 % Date: 25-Jan-2019 12:02:28
 % Reference:

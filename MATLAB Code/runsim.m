@@ -11,14 +11,14 @@ t_kalman = (0:nstep_aid)'.*simpar.general.dt_kalmanUpdate;
 nstep_aid = length(t_kalman);
 %If you are computing the nominal star tracker or other sensor orientations
 %below is an example of one way to do this
-qz = rotv2quat(simpar.general.thz_st,[0,0,1]');
-qy = rotv2quat(simpar.general.thy_st,[0,1,0]');
-qx = rotv2quat(simpar.general.thx_st,[1,0,0]');
-simpar.general.q_b2st_nominal = qmult(qx,qmult(qy,qz));
-qz = rotv2quat(simpar.general.thz_c,[0,0,1]');
-qy = rotv2quat(simpar.general.thy_c,[0,1,0]');
-qx = rotv2quat(simpar.general.thx_c,[1,0,0]');
-simpar.general.q_b2c_nominal = qmult(qx,qmult(qy,qz));
+% % qz = rotv2quat(simpar.general.thz_st,[0,0,1]');
+% % qy = rotv2quat(simpar.general.thy_st,[0,1,0]');
+% % qx = rotv2quat(simpar.general.thx_st,[1,0,0]');
+% % simpar.general.q_b2st_nominal = qmult(qx,qmult(qy,qz));
+% % qz = rotv2quat(simpar.general.thz_c,[0,0,1]');
+% % qy = rotv2quat(simpar.general.thy_c,[0,1,0]');
+% % qx = rotv2quat(simpar.general.thx_c,[1,0,0]');
+% % simpar.general.q_b2c_nominal = qmult(qx,qmult(qy,qz));
 %% Pre-allocate buffers for saving data
 % Truth, navigation, and error state buffers
 x_buff          = zeros(simpar.states.nx,nstep);
@@ -33,14 +33,14 @@ res_example          = zeros(3,nstep_aid);
 resCov_example       = zeros(3,3,nstep_aid);
 K_example_buff       = zeros(simpar.states.nxfe,3,nstep_aid);
 %% Initialize the navigation covariance matrix
-P_buff(:,:,1) = initialize_covariance();
+% P_buff(:,:,1) = initialize_covariance();
 %% Initialize the truth state vector
-x_buff(:,1) = initialize_truth_state();
+x_buff(:,1) = initialize_truth_state(simpar);
 %% Initialize the navigation state vector
-xhat_buff(:,1) = initialize_nav_state();
+xhat_buff(:,1) = initialize_nav_state(simpar);
 %% Miscellaneous calcs
 % Synthesize continuous sensor data at t_n-1
-ytilde_buff(:,1) = contMeas();
+% % ytilde_buff(:,1) = contMeas();
 %Initialize the measurement counter
 k = 1;
 %Check that the error injection, calculation, and removal are all
@@ -68,7 +68,7 @@ for i=2:nstep
     x_buff(:,i) = rk4('truthState_de', x_buff(:,i-1), input_truth,...
         simpar.general.dt);
     % Synthesize continuous sensor data at t_n
-    ytilde_buff(:,i) = contMeas();
+    % % ytilde_buff(:,i) = contMeas();
     % Propagate navigation states to t_n using sensor data from t_n-1
     %   Assign inputs to the navigation state DE
     %   Perform one step of RK4 integration
