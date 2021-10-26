@@ -62,8 +62,12 @@ for i=2:nstep
     %   Realize a sample of process noise (don't forget to scale Q by 1/dt!)
     %   Define any inputs to the truth state DE
     %   Perform one step of RK4 integration
-    input_truth.u = [];
-    input_truth.w = [];
+    a_y_truth = 1;
+    xi_truth = 1;
+    input_truth.u = [a_y_truth; xi_truth];
+    w_a = [0; 0; 0;];
+    w_g = [0; 0; 0;];
+    input_truth.w = [w_a; w_g];
     input_truth.simpar = simpar;
     x_buff(:,i) = rk4('truthState_de', x_buff(:,i-1), input_truth,...
         simpar.general.dt);

@@ -20,7 +20,7 @@ for i=1:length(fnames)
 end
 xhat_errorInject = injectErrors(truth2nav(x), dele, simpar);
 estimationErrors = calcErrors(xhat_errorInject, x, simpar);
-assert(norm(estimationErrors - dele) < 1e-11);
+assert(norm(estimationErrors - dele) < 1e-10);
 x_errorCorrect = correctErrors(xhat_errorInject, dele, simpar);
-assert(norm(xhat - x_errorCorrect) < 1e-12);
+assert(norm(xhat - x_errorCorrect) < 1e-10);
 end
