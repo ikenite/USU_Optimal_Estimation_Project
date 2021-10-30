@@ -26,18 +26,14 @@ x_hat_c = nan(simpar.states.nxf,m_x);
 
 % Errors have been calculated and need to be removed
 
-% Error correction mapping [Equation (5) in Research Paper]
-r = x_hat(simpar.states.ixf.pos) + dele(simpar.states.ixfe.pos);
-v = x_hat(simpar.states.ixf.vel) + dele(simpar.states.ixfe.vel);
+% Error correction mapping
+x_hat_c(simpar.states.ixf.pos) = x_hat(simpar.states.ixf.pos) + dele(simpar.states.ixfe.pos);
+x_hat_c(simpar.states.ixf.vel) = x_hat(simpar.states.ixf.vel) + dele(simpar.states.ixfe.vel);
 quat1 = [1;  dele(simpar.states.ixfe.att)/2];
 quat2 = x_hat(simpar.states.ixf.att);
 q = qmult(quat1, quat2);
-q = normalizeQuat(q);
-ba = x_hat(simpar.states.ixf.abias) + dele(simpar.states.ixfe.abias);
-bg = x_hat(simpar.states.ixf.gbias) + dele(simpar.states.ixfe.gbias);
-rc = x_hat(simpar.states.ixf.cpos) + dele(simpar.states.ixfe.cpos);
-
-for i=1:m_x
-    x_hat_c = [r; v; q; ba; bg; rc];  
-end
+x_hat_c(simpar.states.ixf.att) = normalizeQuat(q);
+x_hat_c(simpar.states.ixf.abias) = x_hat(simpar.states.ixf.abias) + dele(simpar.states.ixfe.abias);
+x_hat_c(simpar.states.ixf.gbias) = x_hat(simpar.states.ixf.gbias) + dele(simpar.states.ixfe.gbias);
+x_hat_c(simpar.states.ixf.cpos) = x_hat(simpar.states.ixf.cpos) + dele(simpar.states.ixfe.cpos);
 end

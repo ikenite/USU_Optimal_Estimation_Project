@@ -7,87 +7,128 @@ function h_figs = plotNavPropErrors(traj)
 % lander application, so you can see how I do it.  Feel free to use or
 % remove whatever applies to your problem.
 %% Prelims
-h_figs = [];
+ h_figs = [];
 simpar = traj.simpar;
-m2km = 1/1000;
-%% Plot trajectory
+%% Plot Steering Angle
 h_figs(end+1) = figure;
-htraj = plot3(traj.truthState(simpar.states.ix.pos(1),:)'*m2km,...
-    traj.truthState(simpar.states.ix.pos(2),:)'*m2km,...
-    traj.truthState(simpar.states.ix.pos(3),:)'*m2km,...
-    'LineWidth',2);
-hold all
-hstart = scatter3(traj.truthState(simpar.states.ix.pos(1),1)'*m2km,...
-    traj.truthState(simpar.states.ix.pos(2),1)'*m2km,...
-    traj.truthState(simpar.states.ix.pos(3),1)'*m2km,...
-    'filled','g');
-hstop = scatter3(traj.truthState(simpar.states.ix.pos(1),end)'*m2km,...
-    traj.truthState(simpar.states.ix.pos(2),end)'*m2km,...
-    traj.truthState(simpar.states.ix.pos(3),end)'*m2km,...
-    'filled','r');
-xlabel('$x_i\left(km\right)$','Interpreter','latex')
-ylabel('$y_i\left(km\right)$','Interpreter','latex')
-zlabel('$z_i\left(km\right)$','Interpreter','latex')
-grid on;
-axis equal;
-[X,Y,Z] = sphere;
-R = simpar.general.R_M/1000;
-hmoon = surf(X*R,Y*R,Z*R,'FaceAlpha',0.2,...
-    'FaceColor','k','EdgeAlpha',0.3);
-legend([htraj, hstart, hstop, hmoon],...
-    'trajectory','start','stop','moon','Interpreter','latex')
-%% Plot Altitude vs. time
-r_mag = sqrt(traj.truthState(simpar.states.ix.pos(1),:).^2 ...
-    + traj.truthState(simpar.states.ix.pos(2),:).^2 ...
-    + traj.truthState(simpar.states.ix.pos(3),:).^2)*m2km;
-alt = r_mag - simpar.general.R_M*m2km;
+st_angle = traj.truthState(simpar.states.ix.st_angle,:);
+stairs(traj.time_nav, st_angle(1,:)*180/pi);
+xlabel('time [s]');
+ylabel('Phi [deg]');
+title('Steering Angle');
+
+%% Plot Heading Angle
 h_figs(end+1) = figure;
-stairs(traj.time_nav,alt);
-% title('Altitude vs. time');
-xlabel('time$\left(s\right)$','Interpreter','latex');
-ylabel('altitude$\left(km\right)$','Interpreter','latex');
+true_q = traj.truthState(simpar.states.ix.att,:);
+true_dcm = q2tmat(true_q);
+true_psi = squeeze((180/pi)*atan(true_dcm(1,2,:)./true_dcm(1,1,:)));
+stairs(traj.time_nav, true_psi);
+hold on;
+nav_q = traj.navState(simpar.states.ixf.att,:);
+nav_dcm = q2tmat(nav_q);
+nav_psi = squeeze((180/pi)*atan(nav_dcm(1,2,:)./nav_dcm(1,1,:)));
+stairs(traj.time_nav, nav_psi);
+title('True vs Estimated Heading Angle');
+xlabel('time [s]');
+ylabel('Heading Angle [deg]');
+legend('True','Estimated')
+hold off;
 grid on;
-%% Plot angular rates
+
+
+%% Plot Measured Angular Rate
 h_figs(end+1) = figure;
-stairs(traj.time_nav,traj.gyro');
-title('Angular rate');
-xlabel('time(s)');
-ylabel('rad/s');
-legend('x_b','y_b','z_b')
+omega_z = traj.continuous_measurements(6,:);
+stairs(traj.time_nav, omega_z);
+title('Measured Body-Frame Angular Rate');
+xlabel('time [s]');
+ylabel('Angular Rate [rad/s]');
 grid on;
-%% Plot attitude vs. time
-nsamp = length(traj.time_nav);
-q_lvlh2b = zeros(4,nsamp);
-q_lvlh2c = zeros(4,nsamp);
-q_b2c = traj.q_b2c_nominal;
-for i=1:nsamp
-    q_i2b = traj.truthState(simpar.states.ix.att,i);
-    q_i2lvlh = tmat2q(inertial2lvlh(traj.truthState(simpar.states.ix.pos,i),...
-        traj.truthState(simpar.states.ix.vel,i)));
-    q_lvlh2b(:,i) = qmult(q_i2b,qConjugate(q_i2lvlh));
-    q_lvlh2c(:,i) = qmult(q_b2c,q_lvlh2b(:,i));
-end
+
+%% Plot Position
 h_figs(end+1) = figure;
-stairs(traj.time_nav,q_lvlh2c');
-xlabel('time$\left(s\right)$','Interpreter','latex');
-ylabel('$q^{lvlh}_{c}$','Interpreter','latex')
-legend('q_0','q_i','q_j','q_k')
+true_position = traj.truthState(simpar.states.ix.pos,:);
+stairs(true_position(1,:), true_position(2,:));
+title('True vs Estimated Position');
+hold on;
+nav_position = traj.navState(simpar.states.ixf.pos,:);
+stairs(nav_position(1,:), nav_position(2,:));
+legend('True','Estimated')
+xlabel('East');
+ylabel('North');
 grid on;
-%% Plot camera angle of incidence
+hold off;
+
+%% Plot East-Velocity
 h_figs(end+1) = figure;
-stairs(traj.time_nav, traj.angle_of_incidence_deg);
-xlabel('time$\left(s\right)$','Interpreter','latex');
-ylabel('$\gamma\left(deg\right)$','Interpreter','latex');
+true_velocity = traj.truthState(simpar.states.ix.vel,:);
+stairs(traj.time_nav, true_velocity(1,:));
+hold on;
+nav_velocity = traj.navState(simpar.states.ixf.vel,:);
+stairs(traj.time_nav, nav_velocity(1,:));
+title('True vs Estimated East-Velocity');
+legend('True','Estimated')
+xlabel('time [s]');
+ylabel('Velocity [m/s]');
 grid on;
-%% Example residuals
+hold off;
+
+%% Plot North-Velocity
 h_figs(end+1) = figure;
-stairs(traj.time_kalman,traj.navRes.example'); hold on
-xlabel('Time(s)')
-ylabel('Star Tracker Residuals(rad)')
-legend('x_{st}','y_{st}','z_{st}')
+%true_velocity = traj.truthState(simpar.states.ix.vel,:);
+stairs(traj.time_nav, true_velocity(2,:));
+hold on;
+%nav_velocity = traj.navState(simpar.states.ixf.vel,:);
+stairs(traj.time_nav, nav_velocity(2,:));
+title('True vs Estimated North-Velocity');
+legend('True','Estimated')
+xlabel('time [s]');
+ylabel('Velocity [m/s]');
 grid on;
+hold off;
+
+%% Plot Measured Body-Frame Accelerations
+h_figs(end+1) = figure;
+body_accel = (traj.continuous_measurements([1 2 3],:));
+body_accel_x = body_accel(1,:);
+body_accel_y = body_accel(2,:);
+body_accel_z = body_accel(3,:);
+hold on;
+stairs(traj.time_nav, body_accel_x);
+stairs(traj.time_nav, body_accel_y);
+stairs(traj.time_nav, body_accel_z);
+hold off;
+title('Measured Body-Frame Accelerations');
+xlabel('time [s]');
+ylabel('Acceleration [m/s^2]');
+legend('x','y','z');
+grid on;
+
+
+%% Plot True Inertial-Frame East-Acceleration
+h_figs(end+1) = figure;
+% i_east_accel = body_accel./cos(true_psi*pi/180);
+temp = size(traj.continuous_measurements);
+nstep = temp(2);
+i_accel_quat = qmult(qConjugate(true_q), qmult([zeros(1,nstep); body_accel], true_q));
+i_accel = i_accel_quat([2 3 4], :);
+i_accel_east = i_accel(1,:);
+i_accel_north = i_accel(2,:);
+i_accel_up = i_accel(3,:);
+hold on;
+stairs(traj.time_nav, i_accel_east);
+stairs(traj.time_nav, i_accel_north);
+stairs(traj.time_nav, i_accel_up);
+title('True Inertial-Frame Acceleration');
+xlabel('time [s]');
+ylabel('Acceleration [m/s^2]');
+legend('East','North','Up')
+grid on;
+hold off;
+spreadfigures();
 %% Calculate estimation errors
 dele = calcErrors(traj.navState, traj.truthState, simpar);
+
 %% Plot position estimation error
 h_figs(end+1) = figure;
 stairs(traj.time_nav, dele(simpar.states.ixfe.pos,:)');

@@ -20,32 +20,38 @@ function xdot = truthState_de( x, input)
 simpar = input.simpar;
 a_y = input.u(1);
 xi = input.u(2);
-phi = x(simpar.states.ix.st_angle);
-v_y = x(simpar.states.ix.vel(2));
-L   = simpar.general.L;
 tau_a = simpar.general.tau_a;
 tau_g = simpar.general.tau_g;
-w_a = input.w(1);
-w_g = input.w(2);
-%% Compute individual elements of x_dot
-r_dot = x(simpar.states.ix.vel);
+w_a = input.w([1 2 3]);
+w_g = input.w([4 5 6]);
 
+%% Compute individual elements of x_dot
+% Time-derivative of position
+xdot(simpar.states.ix.pos) = x(simpar.states.ix.vel);
+
+% Time-derivative of velocity
 q_conj = qConjugate(x(simpar.states.ix.att));
 q = x(simpar.states.ix.att);
-a_quat = [0; 0; 0; a_y];
+a_quat = [0; 0; a_y; 0];
 v_dot_pre = qmult(q_conj, qmult(a_quat, q));
-v_dot = v_dot_pre([2 3 4]);
+xdot(simpar.states.ix.vel) = v_dot_pre([2 3 4]);
 
-w_quat = [0; 0; 0; (v_y/L)*tan(phi)];
-q_dot = (1/2)*qmult(w_quat, q);
+% Time-derivative of attitude quaternion
+w_quat = [0; calc_omega(x, simpar)];
+xdot(simpar.states.ix.att) = (1/2)*qmult(w_quat, q);
  
-phi_dot = xi;
+% Time-derivative of steering angle
+xdot(simpar.states.ix.st_angle) = xi;
 
-abias_dot = -(1/tau_a)*x(simpar.states.ix.abias) + w_a;
+% Time-derivative of accel bias
+xdot(simpar.states.ix.abias) = -(1/tau_a)*x(simpar.states.ix.abias) + w_a;
 
-gbias_dot = -(1/tau_g)*x(simpar.states.ix.gbias) + w_g;
-rc_dot = [0; 0; 0];
+% Time-derivative of gyro bias
+xdot(simpar.states.ix.gbias) = -(1/tau_g)*x(simpar.states.ix.gbias) + w_g;
 
-%% Assign to output
-xdot = [r_dot; v_dot; q_dot; phi_dot; abias_dot; gbias_dot; rc_dot];
+% Time-derivative of ground circuit position
+xdot(simpar.states.ix.cpos) = [0; 0; 0];
+
+% Transpose x_dot for column vector
+xdot = xdot';
 end

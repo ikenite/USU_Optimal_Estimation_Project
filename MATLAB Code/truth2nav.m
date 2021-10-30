@@ -1,4 +1,4 @@
-function [ xhat ] = truth2nav(x_t)
+function [ xhat ] = truth2nav(x_t, simpar)
 %truth2nav maps the truth state vector to the navigation state vector
 %
 % Inputs:
@@ -15,23 +15,12 @@ function [ xhat ] = truth2nav(x_t)
 % Reference: 
 % Copyright 2019 Utah State University
 
-xhat = [x_t(1);  % x position of vehicle
-        x_t(2);  % y position of vehicle
-        x_t(3);  % z position of vehicle
-        x_t(4);  % x velocity
-        x_t(5);  % y velocity
-        x_t(6);  % z velocity
-        x_t(7);  % quaternion 1
-        x_t(8);  % quaternion 2
-        x_t(9);  % quaternion 3
-        x_t(10); % quaternion 4
-        x_t(15); % x accelerometer bias
-        x_t(16); % y accelerometer bias
-        x_t(17); % z accelerometer bias
-        x_t(18); % x gyroscope bias
-        x_t(19); % y gyroscope bias
-        x_t(20); % z gyroscope bias
-        x_t(21); % x position of coil
-        x_t(22); % y position of coil
-        x_t(23)];% z position of coil
+M = zeros(simpar.states.nxf, simpar.states.nx); 
+M(simpar.states.ixf.pos, simpar.states.ix.pos) = eye(length(simpar.states.ix.pos));
+M(simpar.states.ixf.vel, simpar.states.ix.vel) = eye(length(simpar.states.ix.vel));
+M(simpar.states.ixf.att, simpar.states.ix.att) = eye(length(simpar.states.ix.att));
+M(simpar.states.ixf.abias, simpar.states.ix.abias) = eye(length(simpar.states.ix.abias));
+M(simpar.states.ixf.gbias, simpar.states.ix.gbias) = eye(length(simpar.states.ix.gbias));
+M(simpar.states.ixf.cpos, simpar.states.ix.cpos) = eye(length(simpar.states.ix.cpos));
+xhat = M*x_t;
 end

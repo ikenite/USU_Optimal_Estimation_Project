@@ -18,8 +18,35 @@ function xhatdot = navState_de(xhat,input)
 
 %% Unpack the inputs
 simpar = input.simpar;
-omegatilde = input.ytilde;
+omega_tilde = input.omega_tilde;
+a_tilde = input.a_tilde;
+tau_a = simpar.general.tau_a;
+tau_g = simpar.general.tau_g;
+
 %% Compute individual elements of x_dot
-%% Assign to output
-xhatdot = [];
+% Time-derivative of position
+xhatdot(simpar.states.ixf.pos) = xhat(simpar.states.ixf.vel);
+
+% Time-derivative of velocity
+q_conj = qConjugate(xhat(simpar.states.ixf.att));
+q = xhat(simpar.states.ixf.att);
+a_quat = [0; a_tilde];
+v_dot_pre = qmult(q_conj, qmult(a_quat, q));
+xhatdot(simpar.states.ixf.vel) = v_dot_pre([2 3 4]);
+
+% Time-derivative of attitude quaternion
+w_quat = [0; calc_omega(xhat, simpar)];
+xhatdot(simpar.states.ixf.att) = (1/2)*qmult(w_quat, q);
+
+% Time-derivative of accel bias
+xhatdot(simpar.states.ixf.abias) = -(1/tau_a)*xhat(simpar.states.ixf.abias);
+
+% Time-derivative of gyro bias
+xhatdot(simpar.states.ixf.gbias) = -(1/tau_g)*xhat(simpar.states.ixf.gbias);
+
+% Time-derivative of ground circuit position
+xhatdot(simpar.states.ixf.cpos) = [0; 0; 0];
+
+% Transpose x_dot for column vector
+xhatdot = xhatdot';
 end
