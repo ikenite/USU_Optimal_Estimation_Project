@@ -25,9 +25,9 @@ r1_b = [simpar.general.r1_x; simpar.general.r1_y; simpar.general.r1_z]; ...
     % Sensing coil 1 in body frame
 r2_b = [simpar.general.r2_x; simpar.general.r2_y; simpar.general.r2_z]; ...
     % Sensing coil 2 in body frame
-r_c = x(simpar.states.ix.cpos); % Ground circuit position in inertial frame
-r_v = x(simpar.states.ix.pos); % Vehicle position in inertial frame
-q = x(simpar.states.ix.att); % Attitude quaternion of vehicle wrt inertial frame
+r_c = x(simpar.states.ixf.cpos); % Ground circuit position in inertial frame
+r_v = x(simpar.states.ixf.pos); % Vehicle position in inertial frame
+q = x(simpar.states.ixf.att); % Attitude quaternion of vehicle wrt inertial frame
 q_conj = qConjugate(q);
 f = simpar.general.f; % Carrier frequency [hz]
 c = simpar.general.c; % Speed of light in air

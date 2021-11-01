@@ -26,7 +26,7 @@ n_a = zeros(3,1);
 n_g = zeros(3,1);
 
 omega = calc_omega(x,simpar);
-a = [0; a_y; 0];
+a = calc_accel(a_y,x,simpar);
 
 a_tilde = a + b_a + n_a;
 omega_tilde = omega + b_g + n_g;

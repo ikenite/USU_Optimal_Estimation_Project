@@ -20,21 +20,19 @@ function [ dele ] = calcErrors( xhat, x, simpar )
 [~,m_x] = size(x);
 [~, m_xhat] = size(xhat);
 assert(m_x == m_xhat);
-xhat_true = truth2nav(x,simpar);
 dele = nan(simpar.states.nxfe,m_x);
 
 % x_hat now has errors injected in
 
 % Estimation error mapping
-temp = size(x);
-n = temp(2);
-for i=1:n
-dele(simpar.states.ixfe.pos,i) = x(simpar.states.ix.pos,i) - xhat(simpar.states.ixf.pos,i);
-dele(simpar.states.ixfe.vel,i) = x(simpar.states.ix.vel,i) - xhat(simpar.states.ixf.vel,i);
-pre_del_theta = qmult(x(simpar.states.ix.att,i), qConjugate(xhat(simpar.states.ixf.att,i)));
-dele(simpar.states.ixfe.att,i) = 2*pre_del_theta([2 3 4]);
-dele(simpar.states.ixfe.abias,i) = x(simpar.states.ix.abias,i) - xhat(simpar.states.ixf.abias,i);
-dele(simpar.states.ixfe.gbias,i) = x(simpar.states.ix.gbias,i) - xhat(simpar.states.ixf.gbias,i);
-dele(simpar.states.ixfe.cpos,i) = x(simpar.states.ix.cpos,i) - xhat(simpar.states.ixf.cpos,i);
+for i=1:size(x,2)
+    dele(simpar.states.ixfe.pos,i) = x(simpar.states.ixf.pos,i) - xhat(simpar.states.ixf.pos,i);
+    dele(simpar.states.ixfe.vel,i) = x(simpar.states.ixf.vel,i) - xhat(simpar.states.ixf.vel,i);
+    pre_del_theta = qmult(x(simpar.states.ixf.att,i), qConjugate(xhat(simpar.states.ixf.att,i)));
+    dele(simpar.states.ixfe.att,i) = 2*pre_del_theta([2 3 4]);
+    dele(simpar.states.ixfe.abias,i) = x(simpar.states.ixf.abias,i) - xhat(simpar.states.ixf.abias,i);
+    dele(simpar.states.ixfe.gbias,i) = x(simpar.states.ixf.gbias,i) - xhat(simpar.states.ixf.gbias,i);
+    dele(simpar.states.ixfe.cpos,i) = x(simpar.states.ixf.cpos,i) - xhat(simpar.states.ixf.cpos,i);
 end
+
 end

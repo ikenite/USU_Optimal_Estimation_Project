@@ -30,9 +30,9 @@ P_buff       = zeros(simpar.states.nxfe,simpar.states.nxfe,nstep);
 ytilde_buff     = zeros(simpar.general.n_inertialMeas,nstep);
 % Residual buffers (star tracker is included as an example)
 %TODO: Replace the example buffers with ibc buffers
-res_ibc          = zeros(1,nstep_aid);
-resCov_ibc       = zeros(3,3,nstep_aid);
-K_example_buff   = zeros(simpar.states.nxfe,3,nstep_aid);
+res_ibc     = zeros(1,nstep_aid);
+resCov_ibc  = zeros(3,3,nstep_aid);
+K_ibc_buff  = zeros(simpar.states.nxfe,3,nstep_aid);
 %% Initialize the navigation covariance matrix
 % P_buff(:,:,1) = initialize_covariance();
 %% Initialize the truth state vector
@@ -42,17 +42,20 @@ xhat_buff(:,1) = initialize_nav_state(simpar, x_buff(:,1));
 %% Miscellaneous calcs
 % Synthesize continuous sensor data at t_n-1
 
-% Vehicle accelerates constantly with zero steering angle headed East for 
+% Vehicle accelerates constantly with zero steering angle headed North for 
 % accel_time. After accel_time, vehicle continues at w/constant acceleration 
 % and w/sinusoidal steering rate.
+time_scalar = 1/simpar.general.dt;
 accel_time = 5; % [s]
-accel_1_value = 1; % [m/s^2]
+accel_1_value = 0.5; % [m/s^2]
 accel_2_value = 0; % [m/s^2]
-steering_rate = 1*pi/180; %[deg/s]
-a_y = [accel_1_value*ones(accel_time*100,1); ...
-    accel_2_value*ones(nstep-accel_time*100,1)];
-xi = [zeros(accel_time*100,1); ...
-    steering_rate*cos(t(1:nstep-(accel_time*100)))];
+steering_rate = 0.5*pi/180; %[deg/s] to [rad/s]
+a_y = [accel_1_value*ones(accel_time*time_scalar,1); ...
+    accel_2_value*ones(nstep-accel_time*time_scalar,1)];
+xi = [zeros(accel_time*time_scalar,1); ...
+    steering_rate*cos(1*t(1:nstep-(accel_time*time_scalar)))];
+% xi = [steering_rate*ones(accel_time*time_scalar,1);...
+%        zeros(nstep-(accel_time*time_scalar),1)];
 
 ytilde_buff(:,1) = contMeas(x_buff(:,1), a_y(1), simpar);
 %Initialize the measurement counter
@@ -60,7 +63,7 @@ k = 1;
 %Check that the error injection, calculation, and removal are all
 %consistent if the simpar.general.checkErrDefConstEnable is enabled.
 if simpar.general.checkErrDefConstEnable
-    checkErrorDefConsistency(xhat_buff(:,1), x_buff(:,1), simpar)
+    checkErrorDefConsistency(xhat_buff(:,1), truth2nav(x_buff(:,1),simpar), simpar)
 end
 %Inject errors if the simpar.general.errorPropTestEnable flag is enabled
 if simpar.general.errorPropTestEnable
@@ -68,7 +71,7 @@ if simpar.general.errorPropTestEnable
     for i=1:length(fnames)
         delx_buff(i,1) = simpar.errorInjection.(fnames{i});
     end
-    xhat_buff(:,1) = injectErrors(truth2nav(x_buff(:,1)), delx_buff(:,1), simpar);
+    xhat_buff(:,1) = injectErrors(x_buff(:,1), delx_buff(:,1), simpar);
 end
 %% Loop over each time step in the simulation
 for i=2:nstep
@@ -85,8 +88,9 @@ for i=2:nstep
     input_truth.simpar = simpar;
     
     % Propagate truth state forward one dt
-    x_buff(:,i) = rk4('truthState_de', x_buff(:,i-1), input_truth,...
+    x_buff(:,i) = rk4('truthState_de',x_buff(:,i-1), input_truth,...
         simpar.general.dt);
+    % xnew = rk4(diffeq,xold,input,dt)
     
     % Synthesize continuous sensor data at t_n
     ytilde_buff(:,i) = contMeas(x_buff(:,i), a_y(i), simpar);
@@ -107,10 +111,11 @@ for i=2:nstep
     % Propagate the error state from tn-1 to tn if errorPropTestEnable == 1
     if simpar.general.errorPropTestEnable
         input_delx.xhat = xhat_buff(:,i-1);
-        input_delx.ytilde = [];
+        input_delx.ytilde = ytilde_buff(:,i);
         input_delx.simpar = simpar;
         delx_buff(:,i) = rk4('errorState_de', delx_buff(:,i-1), ...
             input_delx, simpar.general.dt);
+        % rk4(diffeq,xold,input,dt)
     end
     
     % If discrete measurements are available, perform a Kalman update
@@ -135,7 +140,7 @@ for i=2:nstep
         %       Update and save the covariance matrix
         %       Correct and save the navigation states
         %TODO: Create buffers for the ibc measurement
-        ztilde_ibc = ibc.synthesize_measurement(x_buff(:,i), simpar);
+        ztilde_ibc = ibc.synthesize_measurement(truth2nav(x_buff(:,i), simpar), simpar);
         ztildehat_ibc = ibc.predict_measurement(xhat_buff(:,i), simpar);
         
 %         H_ibc = ibc.compute_H();

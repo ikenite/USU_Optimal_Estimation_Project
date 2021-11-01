@@ -15,12 +15,27 @@ function [ xhat ] = truth2nav(x_t, simpar)
 % Reference: 
 % Copyright 2019 Utah State University
 
-M = zeros(simpar.states.nxf, simpar.states.nx); 
-M(simpar.states.ixf.pos, simpar.states.ix.pos) = eye(length(simpar.states.ix.pos));
-M(simpar.states.ixf.vel, simpar.states.ix.vel) = eye(length(simpar.states.ix.vel));
-M(simpar.states.ixf.att, simpar.states.ix.att) = eye(length(simpar.states.ix.att));
-M(simpar.states.ixf.abias, simpar.states.ix.abias) = eye(length(simpar.states.ix.abias));
-M(simpar.states.ixf.gbias, simpar.states.ix.gbias) = eye(length(simpar.states.ix.gbias));
-M(simpar.states.ixf.cpos, simpar.states.ix.cpos) = eye(length(simpar.states.ix.cpos));
-xhat = M*x_t;
+
+xhat = nan(simpar.states.nxf,size(x_t,2));
+
+for i = 1:size(x_t,2)
+    xhat(simpar.states.ixf.pos,i) = [x_t(simpar.states.ix.pos_E,i);...
+                                   x_t(simpar.states.ix.pos_N,i);...
+                                   0];
+    xhat(simpar.states.ixf.vel,i) = ...
+        [x_t(simpar.states.ix.vel_yb,i)*sin(x_t(simpar.states.ix.head_angle,i));...
+         x_t(simpar.states.ix.vel_yb,i)*cos(x_t(simpar.states.ix.head_angle,i));...
+         0];
+
+    xhat(simpar.states.ixf.att,i) = [cos(x_t(simpar.states.ix.head_angle,i)/2);...
+                                   0;...
+                                   0;...
+                                   sin(x_t(simpar.states.ix.head_angle,i)/2)];
+
+    xhat(simpar.states.ixf.abias,i) = x_t(simpar.states.ix.abias,i);
+
+    xhat(simpar.states.ixf.gbias,i) = x_t(simpar.states.ix.gbias,i);
+
+    xhat(simpar.states.ixf.cpos,i) = x_t(simpar.states.ix.cpos,i);
+end
 end
