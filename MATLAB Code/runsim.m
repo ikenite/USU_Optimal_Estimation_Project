@@ -33,6 +33,8 @@ ytilde_buff     = zeros(simpar.general.n_inertialMeas,nstep);
 res_ibc     = zeros(1,nstep_aid);
 resCov_ibc  = zeros(3,3,nstep_aid);
 K_ibc_buff  = zeros(simpar.states.nxfe,3,nstep_aid);
+ztilde_ibc_buff = zeros(1,nstep_aid);
+ztildehat_ibc_buff = zeros(1,nstep_aid);
 %% Initialize the navigation covariance matrix
 % P_buff(:,:,1) = initialize_covariance();
 %% Initialize the truth state vector
@@ -140,12 +142,12 @@ for i=2:nstep
         %       Update and save the covariance matrix
         %       Correct and save the navigation states
         %TODO: Create buffers for the ibc measurement
-        ztilde_ibc = ibc.synthesize_measurement(truth2nav(x_buff(:,i), simpar), simpar);
-        ztildehat_ibc = ibc.predict_measurement(xhat_buff(:,i), simpar);
+        ztilde_ibc_buff(:,k) = ibc.synthesize_measurement(truth2nav(x_buff(:,i), simpar), simpar);
+        ztildehat_ibc_buff(:,k) = ibc.predict_measurement(xhat_buff(:,i), simpar);
         
 %         H_ibc = ibc.compute_H();
 %         ibc.validate_linearization();
-         res_ibc(:,k) = ibc.compute_residual(ztilde_ibc, ztildehat_ibc);
+         res_ibc(:,k) = ibc.compute_residual(ztilde_ibc_buff(:,k), ztildehat_ibc_buff(:,k));
          
 %         resCov_ibc(:,k) = compute_residual_cov();
 %         K_ibc_buff(:,:,k) = compute_Kalman_gain();
@@ -181,5 +183,7 @@ traj = struct('navState',xhat_buff,...
     'executionTime',T_execution,...
     'continuous_measurements',ytilde_buff,...
     'kalmanGain',kalmanGains,...
-    'simpar',simpar);
+    'simpar',simpar,...
+    'meas_ibc', ztilde_ibc_buff,...
+    'pred_ibc', ztildehat_ibc_buff);
 end

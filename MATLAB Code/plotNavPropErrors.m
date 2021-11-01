@@ -8,11 +8,11 @@ function h_figs = plotNavPropErrors(traj)
 % remove whatever applies to your problem.
 %% Prelims
 states = 0;
-measurements = 0;
+measurements = 1;
 estimationErrors = 1;
 residuals = 1;
 
- h_figs = [];
+h_figs = [];
 simpar = traj.simpar;
 
 %% State Plots
@@ -32,7 +32,7 @@ if states == true
     ylabel('North');
     grid on;
     hold off;
-
+    
     %% Plot Velocity
     h_figs(end+1) = figure;
     true_velocity = traj.truthState(simpar.states.ix.vel_yb,:);
@@ -69,7 +69,7 @@ if states == true
     stairs(traj.time_nav, st_angle(1,:)*180/pi);
     xlabel('time [s]');
     ylabel('Phi [deg]');
-    title('Steering Angle');   
+    title('Steering Angle');
     
     %% Plot Accelerometer Bias
     h_figs(end+1) = figure;
@@ -140,7 +140,7 @@ if measurements == true
     ylabel('Acceleration [m/s^2]');
     legend('x','y','z');
     grid on;
-
+    
     %% Plot Measured Angular Rate
     h_figs(end+1) = figure;
     omega_z = traj.continuous_measurements(6,:);
@@ -149,14 +149,14 @@ if measurements == true
     xlabel('time [s]');
     ylabel('Angular Rate [rad/s]');
     grid on;
-
+    
 end
 
 %% Estimation Error Plots
 if estimationErrors == true
     %% Calculate estimation errors
     dele = calcErrors(traj.navState, truth2nav(traj.truthState, simpar), simpar);
-
+    
     %% Plot vehicle position estimation error
     h_figs(end+1) = figure;
     stairs(traj.time_nav, dele(simpar.states.ixfe.pos,:)');
@@ -208,14 +208,22 @@ if estimationErrors == true
 end
 %% Measurement Residual Plots
 if residuals == true
-   %% Plot Accelerometer Residual  
+    %% Plot IBC Residual
     h_figs(end+1) = figure;
     stairs(traj.time_kalman, traj.navRes.ibc');
     title('Phase Difference Measurement Residuals');
     xlabel('time(s)');
     ylabel('(deg)');
     grid on;
-   %% Plot Gyroscope Residual  
+    %% Plot IBC measurements
+    h_figs(end+1) = figure;
+    stairs(traj.time_kalman, traj.meas_ibc);
+    hold all;
+    stairs(traj.time_kalman, traj.meas_ibc,'--');
+    title('Phase Difference Measurements');
+    xlabel('time(s)');
+    ylabel('(deg)');
+    grid on;
 end
 spreadfigures();
 end
