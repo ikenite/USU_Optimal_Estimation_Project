@@ -7,8 +7,8 @@ function h_figs = plotNavPropErrors(traj)
 % lander application, so you can see how I do it.  Feel free to use or
 % remove whatever applies to your problem.
 %% Prelims
-states = 1;
-measurements = 1;
+states = 0;
+measurements = 0;
 estimationErrors = 1;
 residuals = 1;
 
@@ -28,8 +28,8 @@ if states == true
     stairs(nav_position_E(:), nav_position_N(:));
     title('True vs Estimated Vehicle Position');
     legend('True','Estimated')
-    xlabel('East');
-    ylabel('North');
+    xlabel('East [m]');
+    ylabel('North [m]');
     grid on;
     hold off;
     
@@ -213,16 +213,17 @@ if residuals == true
     stairs(traj.time_kalman, traj.navRes.ibc');
     title('Phase Difference Measurement Residuals');
     xlabel('time(s)');
-    ylabel('(deg)');
+    ylabel('rad');
     grid on;
     %% Plot IBC measurements
     h_figs(end+1) = figure;
     stairs(traj.time_kalman, traj.meas_ibc);
     hold all;
-    stairs(traj.time_kalman, traj.meas_ibc,'--');
-    title('Phase Difference Measurements');
+    stairs(traj.time_kalman, traj.pred_ibc,'--');
+    title('True vs Estimated Phase Difference Measurements');
+    legend('True','Estimated')
     xlabel('time(s)');
-    ylabel('(deg)');
+    ylabel('rad');
     grid on;
 end
 spreadfigures();
