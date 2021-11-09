@@ -73,7 +73,7 @@ if simpar.general.errorPropTestEnable
     for i=1:length(fnames)
         delx_buff(i,1) = simpar.errorInjection.(fnames{i});
     end
-    xhat_buff(:,1) = injectErrors(x_buff(:,1), delx_buff(:,1), simpar);
+    xhat_buff(:,1) = injectErrors(truth2nav(x_buff(:,1),simpar), delx_buff(:,1), simpar);
 end
 %% Loop over each time step in the simulation
 for i=2:nstep
@@ -124,7 +124,7 @@ for i=2:nstep
     if abs(t(i)-t_kalman(k+1)) < simpar.general.dt*0.01
         %   Check error state propagation if simpar.general.errorPropTestEnable = true
         if simpar.general.errorPropTestEnable
-            checkErrorPropagation(x_buff(:,i), xhat_buff(:,i),...
+            checkErrorPropagation(truth2nav(x_buff(:,i),simpar), xhat_buff(:,i),...
                 delx_buff(:,i), simpar);
         end
         %Adjust the Kalman update index

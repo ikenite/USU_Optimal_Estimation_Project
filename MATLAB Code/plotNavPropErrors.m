@@ -7,8 +7,8 @@ function h_figs = plotNavPropErrors(traj)
 % lander application, so you can see how I do it.  Feel free to use or
 % remove whatever applies to your problem.
 %% Prelims
-states = 0;
-measurements = 0;
+states = 1;
+measurements = 1;
 estimationErrors = 1;
 residuals = 1;
 
