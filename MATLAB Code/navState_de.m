@@ -35,7 +35,7 @@ q_conj = qConjugate(xhat(simpar.states.ixf.att));
 q = xhat(simpar.states.ixf.att);
 a_quat = [0; a_tilde-b_a];
 v_dot_pre = qmult(q, qmult(a_quat, q_conj));
-xhatdot(simpar.states.ixf.vel) = v_dot_pre([2 3 4]) + g_vec;
+xhatdot(simpar.states.ixf.vel) = v_dot_pre([2 3 4]) - g_vec;
 
 % Time-derivative of attitude quaternion
 w_quat = [0; omega_tilde-b_g];

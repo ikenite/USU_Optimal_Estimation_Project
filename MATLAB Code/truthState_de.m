@@ -31,7 +31,7 @@ L = simpar.general.L;
 
 %% Compute individual elements of x_dot
 % Time-derivative of position values
-xdot(simpar.states.ix.pos_E) = vel_yb*sin(psi);
+xdot(simpar.states.ix.pos_E) = -vel_yb*sin(psi);
 xdot(simpar.states.ix.pos_N) = vel_yb*cos(psi);
 
 % Time-derivative of velocity

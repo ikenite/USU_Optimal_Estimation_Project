@@ -143,11 +143,12 @@ if measurements == true
     
     %% Plot Measured Angular Rate
     h_figs(end+1) = figure;
-    omega_z = traj.continuous_measurements(6,:);
-    stairs(traj.time_nav, omega_z);
+    omega = traj.continuous_measurements(4:6,:);
+    stairs(traj.time_nav, omega');
     title('Measured Body-Frame Angular Rate');
     xlabel('time [s]');
     ylabel('Angular Rate [rad/s]');
+    legend('\omega_x','\omega_y','\omega_z')
     grid on;
     
 end
