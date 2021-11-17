@@ -14,7 +14,7 @@ residuals = 1;
 
 h_figs = [];
 simpar = traj.simpar;
-
+design_state = truth2nav(traj.truthState, simpar);
 %% State Plots
 if states == true
     %% Plot Vehicle Position
@@ -61,6 +61,31 @@ if states == true
     ylabel('Heading Angle [deg]');
     legend('True','Estimated')
     hold off;
+    grid on;
+    
+    %% Plot Attitude Values
+    h_figs(end+1) = figure;
+    true_att = design_state(simpar.states.ixf.att,:);
+    true_att_2 = true_att(2,:);
+    true_att_3 = true_att(3,:);
+    true_att_4 = true_att(4,:);
+    est_att = traj.navState(simpar.states.ixf.att,:);
+    est_att_2 = est_att(2,:);
+    est_att_3 = est_att(3,:);
+    est_att_4 = est_att(4,:);
+    hold on;
+    stairs(traj.time_nav, true_att_2, 'o');
+    stairs(traj.time_nav, true_att_3, '+');
+    stairs(traj.time_nav, true_att_4, '*');
+    stairs(traj.time_nav, est_att_2, 'x');
+    stairs(traj.time_nav, est_att_3, '_');
+    stairs(traj.time_nav, est_att_4, '|');
+    hold off;
+    title('True vs Estimated Attitude Quaternion (Vector Components)');
+    xlabel('time [s]');
+    ylabel('unitless');
+    legend('True q2','True q3','True q4', ...
+        'Estimated q2','Estimated q3','Estimated q4');
     grid on;
     
     %% Plot Steering Angle
@@ -180,7 +205,7 @@ if estimationErrors == true
     title('Attitude Error');
     xlabel('time(s)');
     ylabel('(unitless)');
-    legend('q2','q3', 'q4')
+    legend('q2','q3','q4')
     grid on;
     %% Plot accelerometer bias estimation error
     h_figs(end+1) = figure;
@@ -211,20 +236,20 @@ end
 if residuals == true
     %% Plot IBC Residual
     h_figs(end+1) = figure;
-    stairs(traj.time_kalman, traj.navRes.ibc');
+    stairs(traj.time_kalman, traj.navRes.ibc.*(180/pi)');
     title('Phase Difference Measurement Residuals');
     xlabel('time(s)');
-    ylabel('rad');
+    ylabel('deg');
     grid on;
     %% Plot IBC measurements
     h_figs(end+1) = figure;
-    stairs(traj.time_kalman, traj.meas_ibc);
+    stairs(traj.time_kalman, traj.meas_ibc.*(180/pi));
     hold all;
-    stairs(traj.time_kalman, traj.pred_ibc,'--');
+    stairs(traj.time_kalman, traj.pred_ibc.*(180/pi),'--');
     title('True vs Estimated Phase Difference Measurements');
     legend('True','Estimated')
     xlabel('time(s)');
-    ylabel('rad');
+    ylabel('deg');
     grid on;
 end
 spreadfigures();

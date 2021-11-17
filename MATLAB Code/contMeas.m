@@ -21,6 +21,7 @@ function [ ytilde ] = contMeas(x, a_y, simpar)
 % Unpack variables
 b_a = x(simpar.states.ix.abias);
 b_g = x(simpar.states.ix.gbias);
+g_vec_b = [0; 0; -simpar.general.g];
 %TODO: Implement realization of noise for accels and gyros
 n_a = zeros(3,1);
 n_g = zeros(3,1);
@@ -28,7 +29,7 @@ n_g = zeros(3,1);
 omega = calc_omega(x,simpar);
 a = calc_accel(a_y,x,simpar);
 
-a_tilde = a + b_a + n_a;
+a_tilde = a - g_vec_b + b_a + n_a;
 omega_tilde = omega + b_g + n_g;
 ytilde = [a_tilde; omega_tilde];
 end

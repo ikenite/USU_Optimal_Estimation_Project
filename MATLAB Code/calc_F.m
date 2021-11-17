@@ -1,4 +1,4 @@
-function [ Fhat ] = calc_F( xhat, ytilde, simpar )
+function [ Fhat ] = calc_F( xhat, ytilde, simpar)
 %calc_F computes the dynamics coupling matrix
 %
 % Inputs:

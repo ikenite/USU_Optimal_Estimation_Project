@@ -29,7 +29,7 @@ x_hat_c = nan(simpar.states.nxf,m_x);
 % Error correction mapping
 x_hat_c(simpar.states.ixf.pos) = x_hat(simpar.states.ixf.pos) + dele(simpar.states.ixfe.pos);
 x_hat_c(simpar.states.ixf.vel) = x_hat(simpar.states.ixf.vel) + dele(simpar.states.ixfe.vel);
-quat1 = [1;  dele(simpar.states.ixfe.att)/2];
+quat1 = [1; dele(simpar.states.ixfe.att)/2];
 quat2 = x_hat(simpar.states.ixf.att);
 q = qmult(quat1, quat2);
 x_hat_c(simpar.states.ixf.att) = normalizeQuat(q);

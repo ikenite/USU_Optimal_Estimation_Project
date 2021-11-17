@@ -48,16 +48,14 @@ xhat_buff(:,1) = initialize_nav_state(simpar, x_buff(:,1));
 % accel_time. After accel_time, vehicle continues at w/constant acceleration 
 % and w/sinusoidal steering rate.
 time_scalar = 1/simpar.general.dt;
-accel_time = 5; % [s]
+accel_time = 0; % [s]
 accel_1_value = 0.5; % [m/s^2]
-accel_2_value = 0; % [m/s^2]
-steering_rate = 0.5*pi/180; %[deg/s] to [rad/s]
+accel_2_value = 0.25; % [m/s^2]
+steering_rate = 2*pi/180; %[deg/s] to [rad/s]
 a_y = [accel_1_value*ones(accel_time*time_scalar,1); ...
     accel_2_value*ones(nstep-accel_time*time_scalar,1)];
 xi = [zeros(accel_time*time_scalar,1); ...
     steering_rate*cos(1*t(1:nstep-(accel_time*time_scalar)))];
-% xi = [steering_rate*ones(accel_time*time_scalar,1);...
-%        zeros(nstep-(accel_time*time_scalar),1)];
 
 ytilde_buff(:,1) = contMeas(x_buff(:,1), a_y(1), simpar);
 %Initialize the measurement counter
@@ -117,7 +115,10 @@ for i=2:nstep
         input_delx.simpar = simpar;
         delx_buff(:,i) = rk4('errorState_de', delx_buff(:,i-1), ...
             input_delx, simpar.general.dt);
-        % rk4(diffeq,xold,input,dt)
+        if simpar.general.errorPropTestEnableCont
+            checkErrorPropagation(truth2nav(x_buff(:,i),simpar), xhat_buff(:,i),...
+                delx_buff(:,i), simpar,i);
+        end
     end
     
     % If discrete measurements are available, perform a Kalman update
@@ -125,7 +126,7 @@ for i=2:nstep
         %   Check error state propagation if simpar.general.errorPropTestEnable = true
         if simpar.general.errorPropTestEnable
             checkErrorPropagation(truth2nav(x_buff(:,i),simpar), xhat_buff(:,i),...
-                delx_buff(:,i), simpar);
+                delx_buff(:,i), simpar,i);
         end
         %Adjust the Kalman update index
         k = k + 1;
@@ -141,7 +142,6 @@ for i=2:nstep
         %       Estimate the error state vector
         %       Update and save the covariance matrix
         %       Correct and save the navigation states
-        %TODO: Create buffers for the ibc measurement
         ztilde_ibc_buff(:,k) = ibc.synthesize_measurement(truth2nav(x_buff(:,i), simpar), simpar);
         ztildehat_ibc_buff(:,k) = ibc.predict_measurement(xhat_buff(:,i), simpar);
         
