@@ -7,39 +7,76 @@ function h_figs = plotNavPropErrors(traj)
 % lander application, so you can see how I do it.  Feel free to use or
 % remove whatever applies to your problem.
 %% Prelims
+position = 1;
 states = 1;
-measurements = 1;
+inputs = 0;
+cont_measurements = 0;
 estimationErrors = 1;
 residuals = 1;
 
 h_figs = [];
 simpar = traj.simpar;
 design_state = truth2nav(traj.truthState, simpar);
-%% State Plots
-if states == true
+%% Position Plot
+if position == true
     %% Plot Vehicle Position
     h_figs(end+1) = figure;
     hold on;
     true_position_E = traj.truthState(simpar.states.ix.pos_E,:);
     true_position_N = traj.truthState(simpar.states.ix.pos_N,:);
-    stairs(true_position_E(:), true_position_N(:));
+    stairs(true_position_E(:), true_position_N(:), 'LineWidth',2);
     nav_position_E = traj.navState(simpar.states.ixf.pos(1),:);
     nav_position_N = traj.navState(simpar.states.ixf.pos(2),:);
-    stairs(nav_position_E(:), nav_position_N(:));
+    stairs(nav_position_E(:), nav_position_N(:),'--', 'LineWidth',2);
+    pos_E_0 = traj.truthState(simpar.states.ix.pos_E,1);
+    pos_N_0 = traj.truthState(simpar.states.ix.pos_N,1);
+    plot(pos_E_0, pos_N_0, 'g*','LineWidth',2)
+    pos_E_f = traj.truthState(simpar.states.ix.pos_E,end);
+    pos_N_f = traj.truthState(simpar.states.ix.pos_N,end);
+    plot(pos_E_f, pos_N_f, 'r*','LineWidth',2)
+    pos_E_C = traj.truthState(simpar.states.ix.cpos(1),1);
+    pos_N_C = traj.truthState(simpar.states.ix.cpos(2),1);
+    plot(pos_E_C, pos_N_C, 'b*','LineWidth',2)
     title('True vs Estimated Vehicle Position');
-    legend('True','Estimated')
+    legend('True Trajectory','Estimated Trajectory', ...
+           'Start Position', 'End Position', 'Ground Coil Position')
     xlabel('East [m]');
     ylabel('North [m]');
+    axis([-2 2 -3 55])
     grid on;
     hold off;
     
+    %% Plot Steering Angle
+    h_figs(end+1) = figure;
+    hold on;
+    st_angle = traj.truthState(simpar.states.ix.st_angle,:);
+    stairs(traj.time_nav, st_angle(:)*180/pi, 'LineWidth',2);
+    xlabel('time [s]');
+    ylabel('Phi [deg]');
+    title('Steering Angle');
+    hold off;
+end
+
+%% Input Plots
+if inputs == true
+   %% Plot Steering Rate
+   h_figs(end+1) = figure;
+   xi = traj.input.xi;
+   stairs(traj.time_nav, xi.*180/pi, 'LineWidth',2);
+   title('Steering Rate');
+   xlabel('time [s]');
+   ylabel('Xi [deg/s]');
+end
+
+%% State Plots
+if states == true    
     %% Plot Velocity
     h_figs(end+1) = figure;
     true_velocity = traj.truthState(simpar.states.ix.vel_yb,:);
-    stairs(traj.time_nav, true_velocity(1,:));
+    stairs(traj.time_nav, true_velocity(1,:), 'LineWidth',2);
     hold on;
     nav_velocity = vecnorm(traj.navState(simpar.states.ixf.vel,:));
-    stairs(traj.time_nav, nav_velocity(1,:));
+    stairs(traj.time_nav, nav_velocity(1,:), 'LineWidth',2);
     title('True vs Estimated Velocity');
     legend('True','Estimated')
     xlabel('time [s]');
@@ -50,12 +87,12 @@ if states == true
     %% Plot Heading Angle
     h_figs(end+1) = figure;
     true_psi = traj.truthState(simpar.states.ix.head_angle,:);
-    stairs(traj.time_nav, true_psi*180/pi);
+    stairs(traj.time_nav, true_psi*180/pi, 'LineWidth',2);
     hold on;
     nav_q = traj.navState(simpar.states.ixf.att,:);
     nav_dcm = q2tmat(nav_q);
     nav_psi = squeeze((180/pi)*atan2(nav_dcm(1,2,:),nav_dcm(1,1,:)));
-    stairs(traj.time_nav, nav_psi);
+    stairs(traj.time_nav, nav_psi, 'LineWidth',2);
     title('True vs Estimated Heading Angle');
     xlabel('time [s]');
     ylabel('Heading Angle [deg]');
@@ -74,12 +111,12 @@ if states == true
     est_att_3 = est_att(3,:);
     est_att_4 = est_att(4,:);
     hold on;
-    stairs(traj.time_nav, true_att_2, 'o');
-    stairs(traj.time_nav, true_att_3, '+');
-    stairs(traj.time_nav, true_att_4, '*');
-    stairs(traj.time_nav, est_att_2, 'x');
-    stairs(traj.time_nav, est_att_3, '_');
-    stairs(traj.time_nav, est_att_4, '|');
+    stairs(traj.time_nav, true_att_2, 'o', 'LineWidth',0.5);
+    stairs(traj.time_nav, true_att_3, '+', 'LineWidth',0.5);
+    stairs(traj.time_nav, true_att_4, '*', 'LineWidth',0.5);
+    stairs(traj.time_nav, est_att_2, 'x', 'LineWidth',0.5);
+    stairs(traj.time_nav, est_att_3, '_', 'LineWidth',0.5);
+    stairs(traj.time_nav, est_att_4, '|', 'LineWidth',0.5);
     hold off;
     title('True vs Estimated Attitude Quaternion (Vector Components)');
     xlabel('time [s]');
@@ -87,14 +124,6 @@ if states == true
     legend('True q2','True q3','True q4', ...
         'Estimated q2','Estimated q3','Estimated q4');
     grid on;
-    
-    %% Plot Steering Angle
-    h_figs(end+1) = figure;
-    st_angle = traj.truthState(simpar.states.ix.st_angle,:);
-    stairs(traj.time_nav, st_angle(1,:)*180/pi);
-    xlabel('time [s]');
-    ylabel('Phi [deg]');
-    title('Steering Angle');
     
     %% Plot Accelerometer Bias
     h_figs(end+1) = figure;
@@ -107,12 +136,12 @@ if states == true
     est_accel_bias_y = est_accel_bias(2,:);
     est_accel_bias_z = est_accel_bias(3,:);
     hold on;
-    stairs(traj.time_nav, true_accel_bias_x);
-    stairs(traj.time_nav, true_accel_bias_y);
-    stairs(traj.time_nav, true_accel_bias_z);
-    stairs(traj.time_nav, est_accel_bias_x);
-    stairs(traj.time_nav, est_accel_bias_y);
-    stairs(traj.time_nav, est_accel_bias_z);
+    stairs(traj.time_nav, true_accel_bias_x, 'LineWidth',2);
+    stairs(traj.time_nav, true_accel_bias_y, 'LineWidth',2);
+    stairs(traj.time_nav, true_accel_bias_z, 'LineWidth',2);
+    stairs(traj.time_nav, est_accel_bias_x, 'LineWidth',2);
+    stairs(traj.time_nav, est_accel_bias_y, 'LineWidth',2);
+    stairs(traj.time_nav, est_accel_bias_z, 'LineWidth',2);
     hold off;
     title('True vs Estimated Accelerometer Biases');
     xlabel('time [s]');
@@ -132,12 +161,12 @@ if states == true
     est_gyro_bias_y = est_gyro_bias(2,:);
     est_gyro_bias_z = est_gyro_bias(3,:);
     hold on;
-    stairs(traj.time_nav, true_gyro_bias_x);
-    stairs(traj.time_nav, true_gyro_bias_y);
-    stairs(traj.time_nav, true_gyro_bias_z);
-    stairs(traj.time_nav, est_gyro_bias_x);
-    stairs(traj.time_nav, est_gyro_bias_y);
-    stairs(traj.time_nav, est_gyro_bias_z);
+    stairs(traj.time_nav, true_gyro_bias_x, 'LineWidth',2);
+    stairs(traj.time_nav, true_gyro_bias_y, 'LineWidth',2);
+    stairs(traj.time_nav, true_gyro_bias_z, 'LineWidth',2);
+    stairs(traj.time_nav, est_gyro_bias_x, 'LineWidth',2);
+    stairs(traj.time_nav, est_gyro_bias_y, 'LineWidth',2);
+    stairs(traj.time_nav, est_gyro_bias_z, 'LineWidth',2);
     hold off;
     title('True vs Estimated Gyroscope Biases');
     xlabel('time [s]');
@@ -148,7 +177,7 @@ if states == true
 end
 
 %% Measurement Plots
-if measurements == true
+if cont_measurements == true
     %% Plot Measured Body-Frame Accelerations
     h_figs(end+1) = figure;
     body_accel = (traj.continuous_measurements([1 2 3],:));
@@ -156,9 +185,9 @@ if measurements == true
     body_accel_y = body_accel(2,:);
     body_accel_z = body_accel(3,:);
     hold on;
-    stairs(traj.time_nav, body_accel_x);
-    stairs(traj.time_nav, body_accel_y);
-    stairs(traj.time_nav, body_accel_z);
+    stairs(traj.time_nav, body_accel_x, 'LineWidth',2);
+    stairs(traj.time_nav, body_accel_y, 'LineWidth',2);
+    stairs(traj.time_nav, body_accel_z, 'LineWidth',2);
     hold off;
     title('Measured Body-Frame Accelerations');
     xlabel('time [s]');
@@ -169,7 +198,7 @@ if measurements == true
     %% Plot Measured Angular Rate
     h_figs(end+1) = figure;
     omega = traj.continuous_measurements(4:6,:);
-    stairs(traj.time_nav, omega');
+    stairs(traj.time_nav, omega', 'LineWidth',2);
     title('Measured Body-Frame Angular Rate');
     xlabel('time [s]');
     ylabel('Angular Rate [rad/s]');
@@ -185,7 +214,7 @@ if estimationErrors == true
     
     %% Plot vehicle position estimation error
     h_figs(end+1) = figure;
-    stairs(traj.time_nav, dele(simpar.states.ixfe.pos,:)');
+    stairs(traj.time_nav, dele(simpar.states.ixfe.pos,:)', 'LineWidth',2);
     title('Vehicle Position Error');
     xlabel('time(s)');
     ylabel('m');
@@ -193,7 +222,7 @@ if estimationErrors == true
     grid on;
     %% Plot velocity estimation error
     h_figs(end+1) = figure;
-    stairs(traj.time_nav, dele(simpar.states.ixfe.vel,:)');
+    stairs(traj.time_nav, dele(simpar.states.ixfe.vel,:)', 'LineWidth',2);
     title('Velocity Error');
     xlabel('time(s)');
     ylabel('m/s');
@@ -201,7 +230,7 @@ if estimationErrors == true
     grid on;
     %% Plot attitude estimation error
     h_figs(end+1) = figure;
-    stairs(traj.time_nav, dele(simpar.states.ixfe.att,:)');
+    stairs(traj.time_nav, dele(simpar.states.ixfe.att,:)', 'LineWidth',2);
     title('Attitude Error');
     xlabel('time(s)');
     ylabel('(unitless)');
@@ -209,7 +238,7 @@ if estimationErrors == true
     grid on;
     %% Plot accelerometer bias estimation error
     h_figs(end+1) = figure;
-    stairs(traj.time_nav, dele(simpar.states.ixfe.abias,:)');
+    stairs(traj.time_nav, dele(simpar.states.ixfe.abias,:)', 'LineWidth',2);
     title('Accelerometer Bias Error');
     xlabel('time(s)');
     ylabel('m/s^2');
@@ -217,7 +246,7 @@ if estimationErrors == true
     grid on;
     %% Plot gyro bias estimation error
     h_figs(end+1) = figure;
-    stairs(traj.time_nav, dele(simpar.states.ixfe.abias,:)');
+    stairs(traj.time_nav, dele(simpar.states.ixfe.abias,:)', 'LineWidth',2);
     title('Gyroscope Bias Error');
     xlabel('time(s)');
     ylabel('rad/s');
@@ -225,7 +254,7 @@ if estimationErrors == true
     grid on;
     %% Plot ground coil position estimation error
     h_figs(end+1) = figure;
-    stairs(traj.time_nav, dele(simpar.states.ixfe.cpos,:)');
+    stairs(traj.time_nav, dele(simpar.states.ixfe.cpos,:)', 'LineWidth',2);
     title('Ground Coil Position Error');
     xlabel('time(s)');
     ylabel('m');
@@ -236,16 +265,16 @@ end
 if residuals == true
     %% Plot IBC Residual
     h_figs(end+1) = figure;
-    stairs(traj.time_kalman, traj.navRes.ibc.*(180/pi)');
+    stairs(traj.time_kalman, traj.navRes.ibc.*(180/pi)', 'LineWidth',2);
     title('Phase Difference Measurement Residuals');
     xlabel('time(s)');
     ylabel('deg');
     grid on;
     %% Plot IBC measurements
     h_figs(end+1) = figure;
-    stairs(traj.time_kalman, traj.meas_ibc.*(180/pi));
+    stairs(traj.time_kalman, traj.meas_ibc.*(180/pi), 'LineWidth',2);
     hold all;
-    stairs(traj.time_kalman, traj.pred_ibc.*(180/pi),'--');
+    stairs(traj.time_kalman, traj.pred_ibc.*(180/pi),'--', 'LineWidth',2);
     title('True vs Estimated Phase Difference Measurements');
     legend('True','Estimated')
     xlabel('time(s)');

@@ -41,21 +41,36 @@ ztildehat_ibc_buff = zeros(1,nstep_aid);
 x_buff(:,1) = initialize_truth_state(simpar);
 %% Initialize the navigation state vector
 xhat_buff(:,1) = initialize_nav_state(simpar, x_buff(:,1));
+
+%% System Inputs
+% Vehicle begins with initial velocity and zero steering angle oriented North.
+% A periodic input causes the vehicle to follow a sinusoid-like path, passing
+% the ground coil along the way.
+time_scalar = 1/simpar.general.dt;
+steering_rate = 5*pi/180; %[deg/s] to [rad/s]
+steering_T = 1; % [1/hz] --> T = 1/f
+steering_frequency = (2*pi)*(1/steering_T); % omega = 2pi*f 
+c_factor = -0.0005;
+
+a_y = 0*ones(nstep,1);
+
+xi = zeros(nstep,1);
+xi_t_vec_1 = t(1:steering_T*time_scalar/2+1);
+xi(1:steering_T*time_scalar/2+1) = ...
+    4*steering_frequency*steering_rate.*cos(2*steering_frequency.*(xi_t_vec_1));
+    
+for i = steering_T*time_scalar/2+2:nstep
+    if mod(t(i)-steering_T/2,2*steering_T) < steering_T % (t - T/2)%2T < T
+        xi(i) = steering_frequency*steering_rate*cos(steering_frequency*(t(i)+c_factor));
+    else
+        xi(i) = -steering_frequency*steering_rate*cos(steering_frequency*(t(i)+c_factor));
+    end
+end
+
+input.a_y = a_y;
+input.xi = xi;
 %% Miscellaneous calcs
 % Synthesize continuous sensor data at t_n-1
-
-% Vehicle accelerates constantly with zero steering angle headed North for 
-% accel_time. After accel_time, vehicle continues at w/constant acceleration 
-% and w/sinusoidal steering rate.
-time_scalar = 1/simpar.general.dt;
-accel_time = 0; % [s]
-accel_1_value = 0.5; % [m/s^2]
-accel_2_value = 0.25; % [m/s^2]
-steering_rate = 2*pi/180; %[deg/s] to [rad/s]
-a_y = [accel_1_value*ones(accel_time*time_scalar,1); ...
-    accel_2_value*ones(nstep-accel_time*time_scalar,1)];
-xi = [zeros(accel_time*time_scalar,1); ...
-    steering_rate*cos(1*t(1:nstep-(accel_time*time_scalar)))];
 
 ytilde_buff(:,1) = contMeas(x_buff(:,1), a_y(1), simpar);
 %Initialize the measurement counter
@@ -178,6 +193,7 @@ traj = struct('navState',xhat_buff,...
     'navRes',navRes,...
     'navResCov',navResCov,...
     'truthState',x_buff,...
+    'input', input,...
     'time_nav',t,...
     'time_kalman',t_kalman,...
     'executionTime',T_execution,...
