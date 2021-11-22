@@ -41,6 +41,8 @@ r2_quat = [0; r2_b];
 r2_pre = qmult(q_conj, qmult(r2_quat, q));
 d_2 = norm(r_c - r_v - r2_pre([2 3 4]));
 
+%TODO: synthesize noise
+
 % Calculate z_tilde based on measurement model
 z_tilde = (2*pi*f/c)*(d_2-d_1);
 end

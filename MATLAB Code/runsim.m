@@ -28,11 +28,16 @@ delx_buff       = zeros(simpar.states.nxfe,nstep);
 P_buff       = zeros(simpar.states.nxfe,simpar.states.nxfe,nstep);
 % Continuous measurement buffer
 ytilde_buff     = zeros(simpar.general.n_inertialMeas,nstep);
-% Residual buffers (star tracker is included as an example)
-%TODO: Replace the example buffers with ibc buffers
+% Residual buffers
+res_gps     = zeros(3,nstep_aid);
+resCov_gps  = zeros(3,3,nstep_aid);
+K_gps_buff  = zeros(simpar.states.nxfe,3,nstep_aid);
 res_ibc     = zeros(1,nstep_aid);
 resCov_ibc  = zeros(3,3,nstep_aid);
 K_ibc_buff  = zeros(simpar.states.nxfe,3,nstep_aid);
+% Discrete measurement buffers
+ztilde_gps_buff = zeros(3,nstep_aid);
+ztildehat_gps_buff = zeros(3,nstep_aid);
 ztilde_ibc_buff = zeros(1,nstep_aid);
 ztildehat_ibc_buff = zeros(1,nstep_aid);
 %% Initialize the navigation covariance matrix
@@ -157,18 +162,32 @@ for i=2:nstep
         %       Estimate the error state vector
         %       Update and save the covariance matrix
         %       Correct and save the navigation states
-        ztilde_ibc_buff(:,k) = ibc.synthesize_measurement(truth2nav(x_buff(:,i), simpar), simpar);
-        ztildehat_ibc_buff(:,k) = ibc.predict_measurement(xhat_buff(:,i), simpar);
-        
-%         H_ibc = ibc.compute_H();
-%         ibc.validate_linearization();
-         res_ibc(:,k) = ibc.compute_residual(ztilde_ibc_buff(:,k), ztildehat_ibc_buff(:,k));
-         
-%         resCov_ibc(:,k) = compute_residual_cov();
-%         K_ibc_buff(:,:,k) = compute_Kalman_gain();
-%         del_x = estimate_error_state_vector();
-%         P_buff(:,:,k) = update_covariance();
-%         xhat_buff(:,i) = correctErrors();
+        if simpar.general.process_GPS_enable
+            ztilde_gps_buff(:,k) = gps.synthesize_measurement(truth2nav(x_buff(:,i), simpar), simpar);
+            ztildehat_gps_buff(:,k) = gps.predict_measurement(xhat_buff(:,i), simpar);
+            H_gps = gps.compute_H(simpar);
+            gps.validate_linearization(x_buff(:,i), simpar);
+            res_gps(:,k) = gps.compute_residual(ztilde_gps_buff(:,k), ztildehat_gps_buff(:,k));
+            
+            %         resCov_gps(:,k) = compute_residual_cov();
+            %         K_gps_buff(:,:,k) = compute_Kalman_gain();
+            %         del_x = estimate_error_state_vector();
+            %         P_buff(:,:,k) = update_covariance();
+            %         xhat_buff(:,i) = correctErrors();
+        end
+        if simpar.general.process_IBC_enable
+            ztilde_ibc_buff(:,k) = ibc.synthesize_measurement(truth2nav(x_buff(:,i), simpar), simpar);
+            ztildehat_ibc_buff(:,k) = ibc.predict_measurement(xhat_buff(:,i), simpar);
+            H_ibc = ibc.compute_H(xhat_buff(:,i), simpar);
+            ibc.validate_linearization(x_buff(:,i), simpar);
+            res_ibc(:,k) = ibc.compute_residual(ztilde_ibc_buff(:,k), ztildehat_ibc_buff(:,k));
+            
+            %         resCov_ibc(:,k) = compute_residual_cov();
+            %         K_ibc_buff(:,:,k) = compute_Kalman_gain();
+            %         del_x = estimate_error_state_vector();
+            %         P_buff(:,:,k) = update_covariance();
+            %         xhat_buff(:,i) = correctErrors();
+        end
     end
     if verbose && mod(i,100) == 0
         fprintf('%0.1f%% complete\n',100 * i/nstep);

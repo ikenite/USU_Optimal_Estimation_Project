@@ -28,10 +28,10 @@ for j=1:length(fnames)
 end
 xhat = injectErrors(truth2nav(x, simpar), dele_injected, simpar);
 %% Calculate residual
-z_tilde = ibc.synthesize_measurement(truth2nav(x, simpar), simpar);
-z_tilde_hat = ibc.predict_measurement(xhat, simpar);
-delz_nl = ibc.compute_residual(z_tilde, z_tilde_hat);
-H = ibc.compute_H(xhat, simpar);
+z_tilde = gps.synthesize_measurement(truth2nav(x,simpar), simpar);
+z_tilde_hat = gps.predict_measurement(xhat, simpar);
+delz_nl = gps.compute_residual(z_tilde, z_tilde_hat);
+H = gps.compute_H(simpar);
 delz_l = H*dele_injected;
 %% Compare linear and nonlinear residuals
 measLinTable.delz_nl = delz_nl;
