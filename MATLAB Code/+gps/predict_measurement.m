@@ -21,8 +21,13 @@ function [z_tilde_hat] = predict_measurement(x_hat, simpar)
 
 % Implement the predicted measurement function (h in Eq. 11 of Debugging Guide)
 % Unpack variables
-r_b = x_hat(simpar.states.ixf.pos); % Vehicle position in inertial frame
+r_b_i = x_hat(simpar.states.ixf.pos); % Vehicle position in inertial frame
+r_gps_b = [simpar.general.r_gps_x; simpar.general.r_gps_y; simpar.general.r_gps_z]; ...
+    % GPS in body frame
+q_hat = x_hat(simpar.states.ixf.att); 
+q_hat = q_hat./norm(q_hat);
+T_b_to_i_hat = q2tmat(q_hat)';
 
 % Calculate z_tilde based on measurement model
-z_tilde_hat = r_b;
+z_tilde_hat = r_b_i + T_b_to_i_hat*r_gps_b;
 end

@@ -1,4 +1,4 @@
-function [] = validate_linearization_example(x, simpar)
+function [] = validate_linearization(x, simpar)
 %validate_linearization_example validates the calculation of the
 %measurement sensitivity matrix
 %
@@ -31,7 +31,7 @@ xhat = injectErrors(truth2nav(x, simpar), dele_injected, simpar);
 z_tilde = gps.synthesize_measurement(truth2nav(x,simpar), simpar);
 z_tilde_hat = gps.predict_measurement(xhat, simpar);
 delz_nl = gps.compute_residual(z_tilde, z_tilde_hat);
-H = gps.compute_H(simpar);
+H = gps.compute_H(xhat,simpar);
 delz_l = H*dele_injected;
 %% Compare linear and nonlinear residuals
 measLinTable.delz_nl = delz_nl;

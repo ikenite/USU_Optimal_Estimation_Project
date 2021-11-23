@@ -21,10 +21,15 @@ function [ z_tilde ] = synthesize_measurement(x, simpar)
 % Copyright 2020 Utah State University
 
 % Unpack variables
-r_b = x(simpar.states.ixf.pos); % Vehicle position in inertial frame
+r_b_i = x(simpar.states.ixf.pos); % Vehicle position in inertial frame
+r_gps_b = [simpar.general.r_gps_x; simpar.general.r_gps_y; simpar.general.r_gps_z]; ...
+    % GPS in body frame
+q = x(simpar.states.ixf.att); 
+q = q./norm(q);
+T_b_to_i = q2tmat(q)';
 
 %TODO: synthesize noise
 
 % Calculate z_tilde based on measurement model
-z_tilde = r_b;
+z_tilde = r_b_i + T_b_to_i*r_gps_b;
 end

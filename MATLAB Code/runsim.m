@@ -165,7 +165,7 @@ for i=2:nstep
         if simpar.general.process_GPS_enable
             ztilde_gps_buff(:,k) = gps.synthesize_measurement(truth2nav(x_buff(:,i), simpar), simpar);
             ztildehat_gps_buff(:,k) = gps.predict_measurement(xhat_buff(:,i), simpar);
-            H_gps = gps.compute_H(simpar);
+            H_gps = gps.compute_H(xhat_buff(:,i),simpar);
             gps.validate_linearization(x_buff(:,i), simpar);
             res_gps(:,k) = gps.compute_residual(ztilde_gps_buff(:,k), ztildehat_gps_buff(:,k));
             
