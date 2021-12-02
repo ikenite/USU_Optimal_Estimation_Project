@@ -20,16 +20,14 @@ function [ P_dot ] = navCov_de( P, input )
 xhat = input.xhat;
 simpar = input.simpar;
 ytilde = input.ytilde;
+Q = input.Q;
 
 %Compute state dynamics matrix
 F = calc_F(xhat, ytilde, simpar);
 
-%Compute process noise coupling matrix
-G = calc_G(xhat, simpar);
-
-%Compute process noise PSD matrix
-Q = calc_Q(xhat, simpar);
+%Compute process noise coupling matrix 
+B = calc_B(xhat, simpar);
 
 %Compute Phat_dot
-P_dot = [];
+P_dot = F*P + P*F' + B*Q*B';
 end

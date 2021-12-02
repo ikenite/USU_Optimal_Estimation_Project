@@ -29,14 +29,14 @@ g_vec_i = [0; 0; -simpar.general.g];
 %% Precalculations
 q = xhat(simpar.states.ixf.att);
 q = q./norm(q);
-nav_dcm = q2tmat(q);
+T_b_to_i = q2tmat(q)';
 
 %% Compute individual elements of x_dot
 % Time-derivative of position
  xhatdot(simpar.states.ixf.pos) = xhat(simpar.states.ixf.vel);
 
 % Time-derivative of velocity
-xhatdot(simpar.states.ixf.vel) = nav_dcm'*(a_tilde - b_a_hat) + g_vec_i;
+xhatdot(simpar.states.ixf.vel) = T_b_to_i*(a_tilde - b_a_hat) + g_vec_i;
 
 % Time-derivative of attitude quaternion
 w_quat = [0; omega_tilde-b_g_hat];

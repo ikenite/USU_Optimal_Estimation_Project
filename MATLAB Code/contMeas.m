@@ -1,4 +1,4 @@
-function [ ytilde ] = contMeas(x, a_y, simpar)
+function [ ytilde ] = contMeas(x, input, simpar)
 %contInertialMeas synthesizes noise measurements used to propagate the
 %navigation state
 %
@@ -22,9 +22,9 @@ function [ ytilde ] = contMeas(x, a_y, simpar)
 b_a = x(simpar.states.ix.abias);
 b_g = x(simpar.states.ix.gbias);
 g_vec_b = [0; 0; -simpar.general.g];
-%TODO: Implement realization of noise for accels and gyros
-n_a = zeros(3,1);
-n_g = zeros(3,1);
+a_y = input.a_y;
+n_a = input.w_vec([1:3]);
+n_g = input.w_vec([4:6]);
 
 omega = calc_omega(x,simpar);
 a = calc_accel(a_y,x,simpar);

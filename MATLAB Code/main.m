@@ -21,11 +21,11 @@ savefile.savedir = savedir;
 savefile.filename = filename;
 %% Read in the simulation parameters
 %Define the simparams
-checkProp = 1;
-runSingleMonteCarlo = 0;
-runMonteCarlo = 0;
-savefigs = 0;
 [ simpar, ~ ] = createSimParams( paramfile );
+checkProp = simpar.general.checkProp;
+runSingleMonteCarlo = simpar.general.runSingleMonteCarlo;
+runMonteCarlo = simpar.general.runMonteCarlo;
+savefigs = simpar.general.savefigs;
 %% Ensure certain flags are not enabled for certain runs
 if simpar.general.measLinerizationCheckEnable
     assert(runSingleMonteCarlo == 0,...
@@ -37,7 +37,7 @@ if simpar.general.measLinerizationCheckEnable
 end
 %% Check propagation and nonlinear measurement modeling
 if checkProp
-    [ ~, simpar_ref ] = createSimParams( paramfile );
+    [~, simpar_ref ] = createSimParams( paramfile );
     traj_propcheck = runsim(simpar_ref,1,1);
     savefile.traj_propcheck = traj_propcheck;
     h_figs_prop_check = plotNavPropErrors(traj_propcheck);
@@ -92,7 +92,7 @@ if runMonteCarlo
     parfor i=1:simpar.general.n_MonteCarloRuns
         traj(i) = runsim(simpar, 0, i);
         errors(:,:,i) = calcErrors( traj(i).navState, ...
-            traj(i).truthState, simpar );
+            truth2nav(traj(i).truthState,simpar), simpar );
         fprintf('%d/%d complete\n',i, simpar.general.n_MonteCarloRuns);
     end
     dt_mc = toc(tic_mc);

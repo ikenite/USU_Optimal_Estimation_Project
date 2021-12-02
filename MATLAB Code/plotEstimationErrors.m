@@ -9,7 +9,7 @@ function h_figs = plotEstimationErrors(traj, simpar)
 %% Extract true states, nav states, and covariances
 navState = traj.navState;
 navCov = traj.navCov;
-nav_errors = calcErrors( navState, traj.truthState, simpar );
+nav_errors = calcErrors( navState, truth2nav(traj.truthState,simpar), simpar );
 h_figs = [];
 %% Star tracker residuals
 if simpar.general.processStarTrackerEnable
@@ -132,40 +132,5 @@ for i=simpar.states.ixfe.gbias
     ylabel(ystring)
     legend('estimated','true','3-sigma')
     grid on;
-end
-%% Plot pos/vel covariances in LVLH frame
-% LVLH position and velocity
-nsamp = length(traj.time_nav);
-P_lvlh = zeros(simpar.states.nxfe, simpar.states.nxfe, nsamp);
-for i=1:nsamp
-    r_i = traj.truthState(simpar.states.ix.pos,i);
-    v_i = traj.truthState(simpar.states.ix.vel,i);
-    T_i2lvlh = inertial2lvlh(r_i, v_i);
-    A = blkdiag(T_i2lvlh, T_i2lvlh, ...
-        eye(simpar.states.nxfe-6, simpar.states.nxfe-6));
-    P_lvlh(:,:,i) = A*traj.navCov(:,:,i)*A';
-end
-ylabels = {'DR Position $(m)$',...
-    'CT Position $(m)$',...
-    'ALT Position $(m)$',...
-    'DR Velocity $(m/s)$',...
-    'CT Velocity $(m/s)$',...
-    'ALT Velocity $(m/s)$'};
-fignames = {'cov_position_errors_X_lvlh',...
-    'cov_position_errors_Y_lvlh',...
-    'cov_position_errors_Z_lvlh',...
-    'cov_velocity_errors_X_lvlh',...
-    'cov_velocity_errors_Y_lvlh',...
-    'cov_velocity_errors_Z_lvlh'};
-for i=1:6
-    h = figure('Name',fignames{i});
-    h_figs(end+1) = h;
-    hold on;
-    grid on;
-    filter_cov = squeeze(P_lvlh(i,i,:));
-    i_plot = 1:simpar.general.dt_kalmanUpdate/simpar.general.dt:nsamp;
-    stairs(traj.time_nav(i_plot), 3*sqrt(filter_cov(i_plot)));
-    xlabel('Time(s)')
-    ylabel(ylabels{i});
 end
 end
