@@ -18,7 +18,7 @@ if simpar.general.noiseOn == true
     % Package up noise vector
     w_vec = [n_a; n_g; w_a; w_g];
 else
-    w_vec = zeros(12,1);
+    w_vec = zeros(simpar.general.n_Qnoise,1);
 end
 
 end

@@ -119,5 +119,5 @@ if runMonteCarlo
     fprintf('MC_time = %g\n',dt_ref + dt_mc);
 end
 %% Final stuff
-totalTime = toc(totalTimeId)
+totalTime = toc(totalTimeId);
 savefile.totalTime = totalTime;

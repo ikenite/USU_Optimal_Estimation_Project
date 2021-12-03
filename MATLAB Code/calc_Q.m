@@ -19,10 +19,10 @@ function [ Q ] = calc_Q(simpar )
 %% Unpack the inputs
 
 %% Calcs
-Q_a_vrw = simpar.truth.params.vrw^2;
-Q_g_arw = simpar.truth.params.arw^2;
-Q_a = 2*simpar.truth.params.sig_accel_ss^2/simpar.general.tau_a;
-Q_g = 2*simpar.truth.params.sig_gyro_ss^2/simpar.general.tau_g;
+Q_a_vrw = simpar.nav.params.vrw^2;
+Q_g_arw = simpar.nav.params.arw^2;
+Q_a = 2*simpar.nav.params.sig_accel_ss^2/simpar.general.tau_a;
+Q_g = 2*simpar.nav.params.sig_gyro_ss^2/simpar.general.tau_g;
 
 Q_a_vrw_matrix = diag([Q_a_vrw; Q_a_vrw; Q_a_vrw]);
 Q_g_arw_matrix = diag([Q_g_arw; Q_g_arw; Q_g_arw]);
