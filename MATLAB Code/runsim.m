@@ -10,6 +10,8 @@ nstep_gps_aid = ceil(simpar.general.tsim/simpar.general.dt_kalmanUpdate_gps);
 t = (0:nstep-1)'*simpar.general.dt;
 t_kalman_ibc = (0:nstep_ibc_aid)'.*simpar.general.dt_kalmanUpdate_ibc;
 t_kalman_gps = (0:nstep_gps_aid)'.*simpar.general.dt_kalmanUpdate_gps;
+t_kalman.ibc = t_kalman_ibc;
+t_kalman.gps = t_kalman_gps;
 nstep_ibc_aid = length(t_kalman_ibc);
 nstep_gps_aid = length(t_kalman_gps);
 %% Pre-allocate buffers for saving data
@@ -26,8 +28,8 @@ res_gps     = zeros(3,nstep_gps_aid);
 resCov_gps  = zeros(3,3,nstep_gps_aid);
 K_gps_buff  = zeros(simpar.states.nxfe,3,nstep_gps_aid);
 res_ibc     = zeros(1,nstep_ibc_aid);
-resCov_ibc  = zeros(3,3,nstep_ibc_aid);
-K_ibc_buff  = zeros(simpar.states.nxfe,3,nstep_ibc_aid);
+resCov_ibc  = zeros(1,1,nstep_ibc_aid);
+K_ibc_buff  = zeros(simpar.states.nxfe,1,nstep_ibc_aid);
 % Discrete measurement buffers
 ztilde_gps_buff = zeros(3,nstep_gps_aid);
 ztildehat_gps_buff = zeros(3,nstep_gps_aid);
@@ -79,6 +81,12 @@ ytilde_buff(:,1) = contMeas(x_buff(:,1), input_ytilde, simpar);
 
 %Compute process noise PSD matrix
 Q = calc_Q(simpar);
+
+% Compute GPS measurement noise matrix
+R_gps = gps.compute_R(simpar);
+
+% Compute PDOA measurement noise scalar
+R_ibc = ibc.compute_R(simpar);
 
 %Initialize the measurement counters
 k_gps = 1;
@@ -174,14 +182,15 @@ for i=2:nstep
             ztilde_gps_buff(:,k_gps) = gps.synthesize_measurement(truth2nav(x_buff(:,i), simpar), simpar);
             ztildehat_gps_buff(:,k_gps) = gps.predict_measurement(xhat_buff(:,i), simpar);
             H_gps = gps.compute_H(xhat_buff(:,i),simpar);
-            gps.validate_linearization(x_buff(:,i), simpar);
+            if simpar.general.measLinearizationCheckEnable
+                gps.validate_linearization(x_buff(:,i), simpar);
+            end
             res_gps(:,k_gps) = gps.compute_residual(ztilde_gps_buff(:,k_gps), ztildehat_gps_buff(:,k_gps));
-            
-            %         resCov_gps(:,k) = compute_residual_cov();
-            %         K_gps_buff(:,:,k) = compute_Kalman_gain();
-            %         del_x = estimate_error_state_vector();
-            %         P_buff(:,:,k) = update_covariance();
-            %         xhat_buff(:,i) = correctErrors();
+            resCov_gps(:,:,k_gps) = compute_residual_cov(H_gps, P_buff(:,:,i),R_gps);
+            K_gps_buff(:,:,k_gps) = compute_Kalman_gain(H_gps, P_buff(:,:,i), R_gps);
+            del_x = estimate_error_state_vector(K_gps_buff(:,:,k_gps), ztilde_gps_buff(:,k_gps), ztildehat_gps_buff(:,k_gps));
+            P_buff(:,:,i) = update_covariance(P_buff(:,:,i), K_gps_buff(:,:,k_gps), H_gps, R_gps, simpar);
+            xhat_buff(:,i) = correctErrors(xhat_buff(:,i), del_x, simpar);
         end
     end
     % If IBC discrete measurements are available, perform a Kalman update
@@ -209,14 +218,15 @@ for i=2:nstep
             ztilde_ibc_buff(:,k_ibc) = ibc.synthesize_measurement(truth2nav(x_buff(:,i), simpar), simpar);
             ztildehat_ibc_buff(:,k_ibc) = ibc.predict_measurement(xhat_buff(:,i), simpar);
             H_ibc = ibc.compute_H(xhat_buff(:,i), simpar);
-            ibc.validate_linearization(x_buff(:,i), simpar);
+            if simpar.general.measLinearizationCheckEnable
+                ibc.validate_linearization(x_buff(:,i), simpar);
+            end
             res_ibc(:,k_ibc) = ibc.compute_residual(ztilde_ibc_buff(:,k_ibc), ztildehat_ibc_buff(:,k_ibc));
-            
-            %         resCov_ibc(:,k) = compute_residual_cov();
-            %         K_ibc_buff(:,:,k) = compute_Kalman_gain();
-            %         del_x = estimate_error_state_vector();
-            %         P_buff(:,:,k) = update_covariance();
-            %         xhat_buff(:,i) = correctErrors();
+            resCov_ibc(:,k_ibc) = compute_residual_cov(H_ibc, P_buff(:,:,i),R_ibc);
+            K_ibc_buff(:,:,k_ibc) = compute_Kalman_gain(H_ibc, P_buff(:,:,i), R_ibc);
+            del_x = estimate_error_state_vector(K_ibc_buff(:,:,k_ibc), ztilde_ibc_buff(:,k_ibc), ztildehat_ibc_buff(:,k_ibc));
+            P_buff(:,:,i) = update_covariance(P_buff(:,:,i), K_ibc_buff(:,:,k_ibc), H_ibc, R_ibc, simpar);
+            xhat_buff(:,i) = correctErrors(xhat_buff(:,i), del_x, simpar);
         end
     end
     if verbose && mod(i,100) == 0
@@ -229,22 +239,23 @@ if verbose
 end
 
 T_execution = toc;
+
 %Package up residuals
 navRes.ibc = res_ibc;
-% navResCov.ibc = resCov_ibc;
-% kalmanGains.ibc = K_ibc_buff;
+navRes.gps = res_gps;
+kalmanGains.ibc = K_ibc_buff;
+kalmanGains.gps = K_gps_buff;
 
-navResCov.ibc = 0;
-kalmanGains.ibc = 0;
 %Package up outputs
 traj = struct('navState',xhat_buff,...
     'navCov',P_buff,...
     'navRes',navRes,...
-    'navResCov',navResCov,...
+    'navResCov_ibc', resCov_ibc,...
+    'navResCov_gps', resCov_gps,...
     'truthState',x_buff,...
     'input', system_input,...
     'time_nav',t,...
-    'time_kalman',t_kalman_ibc,...
+    'time_kalman',t_kalman,...
     'executionTime',T_execution,...
     'continuous_measurements',ytilde_buff,...
     'kalmanGain',kalmanGains,...

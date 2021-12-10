@@ -265,16 +265,24 @@ end
 if residuals == true
     %% Plot IBC Residual
     h_figs(end+1) = figure;
-    stairs(traj.time_kalman, traj.navRes.ibc.*(180/pi)', 'LineWidth',2);
+    stairs(traj.time_kalman.ibc, traj.navRes.ibc.*(180/pi)', 'LineWidth',2);
     title('Phase Difference Measurement Residuals');
     xlabel('time(s)');
     ylabel('deg');
     grid on;
+    %% Plot GPS Residual
+    h_figs(end+1) = figure;
+    stairs(traj.time_kalman.gps, traj.navRes.gps', 'LineWidth',2);
+    title('GPS Measurement Residuals');
+    xlabel('time(s)');
+    ylabel('m');
+    legend('E','N','U')
+    grid on;
     %% Plot IBC measurements
     h_figs(end+1) = figure;
-    stairs(traj.time_kalman, traj.meas_ibc.*(180/pi), 'LineWidth',2);
+    stairs(traj.time_kalman.ibc, traj.meas_ibc.*(180/pi), 'LineWidth',2);
     hold all;
-    stairs(traj.time_kalman, traj.pred_ibc.*(180/pi),'--', 'LineWidth',2);
+    stairs(traj.time_kalman.ibc, traj.pred_ibc.*(180/pi),'--', 'LineWidth',2);
     title('True vs Estimated Phase Difference Measurements');
     legend('True','Estimated')
     xlabel('time(s)');

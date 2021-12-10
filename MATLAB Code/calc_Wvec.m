@@ -1,6 +1,6 @@
 function [w_vec] = calc_Wvec(simpar)
 
-if simpar.general.noiseOn == true
+if simpar.general.processNoiseOn == true
     % Define PSD of process noise for accel and gyro bias
     Q_a = 2*simpar.truth.params.sig_accel_ss^2/simpar.general.tau_a;
     Q_g = 2*simpar.truth.params.sig_gyro_ss^2/simpar.general.tau_g;

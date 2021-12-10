@@ -1,4 +1,4 @@
-function [ output_args ] = estimate_error_state_vector( input_args )
+function delta_x_hat = estimate_error_state_vector(K, z_tilde, z_tilde_hat)
 %estimate_error_state_vector calculates the estimate of the error state
 %vector
 %
@@ -19,4 +19,6 @@ function [ output_args ] = estimate_error_state_vector( input_args )
 % Date: 31-Aug-2020 16:02:03
 % Reference: 
 % Copyright 2020 Utah State University
+
+delta_x_hat = K*(z_tilde - z_tilde_hat);
 end

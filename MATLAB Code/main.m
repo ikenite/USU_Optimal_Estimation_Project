@@ -27,7 +27,7 @@ runSingleMonteCarlo = simpar.general.runSingleMonteCarlo;
 runMonteCarlo = simpar.general.runMonteCarlo;
 savefigs = simpar.general.savefigs;
 %% Ensure certain flags are not enabled for certain runs
-if simpar.general.measLinerizationCheckEnable
+if simpar.general.measLinearizationCheckEnable
     assert(runSingleMonteCarlo == 0,...
         'Measurement linearization check is only valid for checkProp == 1')
     assert(runMonteCarlo == 0,...
