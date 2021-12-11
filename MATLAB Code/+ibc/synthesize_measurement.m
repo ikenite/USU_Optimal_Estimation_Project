@@ -1,4 +1,4 @@
-function [ z_tilde ] = synthesize_measurement(x, simpar)
+function [ z_tilde ] = synthesize_measurement(x, simpar, R_ibc)
 %synthesize_measurement_example synthesizes the discrete measurement
 %corrupted by noise
 %
@@ -31,7 +31,7 @@ q = x(simpar.states.ixf.att); % Attitude quaternion of vehicle wrt inertial fram
 q_conj = qConjugate(q);
 f = simpar.general.f; % Carrier frequency [hz]
 c = simpar.general.c; % Speed of light in air
-sig_pdoa = simpar.truth.params.sig_pdoa;
+var = R_ibc;
 
 
 % Calculate d_1 and d_2 (distances from sensing coils to ground circuit)
@@ -44,11 +44,7 @@ r2_pre = qmult(q_conj, qmult(r2_quat, q));
 d_2 = norm(r_c - r_v - r2_pre([2 3 4]));
 
 %Synthesize noise
-if simpar.general.measurementNoiseOn == true
-    v_pdoa = sig_pdoa*randn(1,1);
-else
-    v_pdoa = zeros(1,1);
-end
+v_pdoa = sqrt(var)*randn(1,1);
 
 % Calculate z_tilde based on measurement model
 z_tilde = (2*pi*f/c)*(d_2-d_1) + v_pdoa;

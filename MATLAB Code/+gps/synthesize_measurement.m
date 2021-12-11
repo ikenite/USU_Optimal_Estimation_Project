@@ -31,11 +31,7 @@ sig_gps = diag([simpar.truth.params.sig_gps_x, simpar.truth.params.sig_gps_y,...
     simpar.truth.params.sig_gps_z]);
 
 %Synthesize noise
-if simpar.general.measurementNoiseOn == true
-    v_gps = sig_gps*randn(3,1);
-else
-    v_gps = zeros(3,1);
-end
+v_gps = sig_gps*randn(3,1);
 
 % Calculate z_tilde based on measurement model
 z_tilde = r_b_i + T_b_to_i*r_gps_b + v_gps;

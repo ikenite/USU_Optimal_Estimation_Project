@@ -1,4 +1,4 @@
-function P = update_covariance(P_pre, K, H, R, simpar )
+function P = update_covariance(P_pre, K, H, R, G, simpar )
 %update_covariance updates the covariance matrix
 
 % Author: Randy Christensen
@@ -10,5 +10,5 @@ function P = update_covariance(P_pre, K, H, R, simpar )
 %matrix
 I = eye(simpar.states.nxfe);
 
-P = (I - K*H)*P_pre*(I - K*H)' + K*R*K';
+P = (I - K*H)*P_pre*(I - K*H)' + K*G*R*G'*K';
 end

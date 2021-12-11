@@ -49,12 +49,14 @@ for i=simpar.states.ixfe.pos
     i_axis = i_axis + 1;
     h_figs(end+1) = figure('Name',sprintf('est_err_%d',i)); %#ok<*AGROW>
     stairs(traj.time_nav, nav_errors(i,:)); hold on
+    stairs(traj.time_kalman.ibc,traj.del_x_ibc(i,:)); 
+    stairs(traj.time_kalman.gps,traj.del_x_gps(i,:)); 
     stairs(traj.time_nav, 3.*sqrt(squeeze(navCov(i,i,:))),'r--');
     stairs(traj.time_nav,-3.*sqrt(squeeze(navCov(i,i,:))),'r--'); hold off
     xlabel('Time [s]')
     ystring = sprintf('%s Position Est Err [m]',axis_str{i_axis});
     ylabel(ystring)
-    legend('error','3-sigma')
+    legend('actual error','ibc estimated error','gps estimated error','3-sigma')
     grid on;
 end
 %% Velocity esimation error
@@ -64,12 +66,14 @@ for i=simpar.states.ixfe.vel
     i_axis = i_axis + 1;
     h_figs(end+1) = figure('Name',sprintf('est_err_%d',i)); %#ok<*AGROW>
     stairs(traj.time_nav, nav_errors(i,:)); hold on
+    stairs(traj.time_kalman.ibc,traj.del_x_ibc(i,:)); 
+    stairs(traj.time_kalman.gps,traj.del_x_gps(i,:)); 
     stairs(traj.time_nav, 3.*sqrt(squeeze(navCov(i,i,:))),'r--');
     stairs(traj.time_nav,-3.*sqrt(squeeze(navCov(i,i,:))),'r--'); hold off
     xlabel('Time [s]')
     ystring = sprintf('%s Velocity Est Err [m/s]',axis_str{i_axis});
     ylabel(ystring)
-    legend('error','3-sigma')
+    legend('actual error','ibc estimated error','gps estimated error','3-sigma')
     grid on;
 end
 %% Attitude estimation error
@@ -79,12 +83,14 @@ for i=simpar.states.ixfe.att
     i_axis = i_axis + 1;
     h_figs(end+1) = figure('Name',sprintf('est_err_%d',i)); %#ok<*AGROW>
     stairs(traj.time_nav, nav_errors(i,:)); hold on
+    stairs(traj.time_kalman.ibc,traj.del_x_ibc(i,:)); 
+    stairs(traj.time_kalman.gps,traj.del_x_gps(i,:)); 
     stairs(traj.time_nav, 3.*sqrt(squeeze(navCov(i,i,:))),'r--');
     stairs(traj.time_nav, -3.*sqrt(squeeze(navCov(i,i,:))),'r--'); hold off
     xlabel('Time [s]')
     ystring = sprintf('%s Attitude Est Err [rad]',axis_str{i_axis});
     ylabel(ystring)
-    legend('estimated','true','3-sigma')
+    legend('actual error','ibc estimated error','gps estimated error','3-sigma')
     grid on;
 end
 %% Accelerometer bias estimation error
@@ -94,12 +100,14 @@ for i=simpar.states.ixfe.abias
     i_axis = i_axis + 1;
     h_figs(end+1) = figure('Name',sprintf('est_err_%d',i)); %#ok<*AGROW>
     stairs(traj.time_nav, nav_errors(i,:)); hold on
+    stairs(traj.time_kalman.ibc,traj.del_x_ibc(i,:)); 
+    stairs(traj.time_kalman.gps,traj.del_x_gps(i,:)); 
     stairs(traj.time_nav, 3.*sqrt(squeeze(navCov(i,i,:))),'r--');
     stairs(traj.time_nav, -3.*sqrt(squeeze(navCov(i,i,:))),'r--'); hold off
     xlabel('Time [s]')
     ystring = sprintf('%s Accelerometer Bias Est Err [m/s^2])',axis_str{i_axis});
     ylabel(ystring)
-    legend('estimated','true','3-sigma')
+    legend('actual error','ibc estimated error','gps estimated error','3-sigma')
     grid on;
 end
 %% Gyroscope bias estimation error
@@ -109,12 +117,14 @@ for i=simpar.states.ixfe.gbias
     i_axis = i_axis + 1;
     h_figs(end+1) = figure('Name',sprintf('est_err_%d',i)); %#ok<*AGROW>
     stairs(traj.time_nav, nav_errors(i,:)); hold on
+    stairs(traj.time_kalman.ibc,traj.del_x_ibc(i,:)); 
+    stairs(traj.time_kalman.gps,traj.del_x_gps(i,:)); 
     stairs(traj.time_nav, 3.*sqrt(squeeze(navCov(i,i,:))),'r--');
     stairs(traj.time_nav, -3.*sqrt(squeeze(navCov(i,i,:))),'r--'); hold off
     xlabel('Time [s]')
     ystring = sprintf('%s Gyroscope Bias Est Err (rad/s)',axis_str{i_axis});
     ylabel(ystring)
-    legend('estimated','true','3-sigma')
+    legend('actual error','ibc estimated error','gps estimated error','3-sigma')
     grid on;
 end
 %% Ground Coil Position estimation error
@@ -124,12 +134,14 @@ for i=simpar.states.ixfe.cpos
     i_axis = i_axis + 1;
     h_figs(end+1) = figure('Name',sprintf('est_err_%d',i)); %#ok<*AGROW>
     stairs(traj.time_nav, nav_errors(i,:)); hold on
+    stairs(traj.time_kalman.ibc,traj.del_x_ibc(i,:)); 
+    stairs(traj.time_kalman.gps,traj.del_x_gps(i,:)); 
     stairs(traj.time_nav, 3.*sqrt(squeeze(navCov(i,i,:))),'r--');
     stairs(traj.time_nav, -3.*sqrt(squeeze(navCov(i,i,:))),'r--'); hold off
     xlabel('Time [s]')
     ystring = sprintf('%s Ground Coil Position Est Err [m]',axis_str{i_axis});
     ylabel(ystring)
-    legend('estimated','true','3-sigma')
+    legend('actual error','ibc estimated error','gps estimated error','3-sigma')
     grid on;
 end
 end

@@ -29,12 +29,15 @@ resCov_gps  = zeros(3,3,nstep_gps_aid);
 K_gps_buff  = zeros(simpar.states.nxfe,3,nstep_gps_aid);
 res_ibc     = zeros(1,nstep_ibc_aid);
 resCov_ibc  = zeros(1,1,nstep_ibc_aid);
-K_ibc_buff  = zeros(simpar.states.nxfe,1,nstep_ibc_aid);
+K_ibc_buff  = zeros(simpar.states.nxfe,nstep_ibc_aid);
 % Discrete measurement buffers
 ztilde_gps_buff = zeros(3,nstep_gps_aid);
 ztildehat_gps_buff = zeros(3,nstep_gps_aid);
+H_ibc_buff = zeros(nstep_ibc_aid,simpar.states.nxfe);
+del_x_ibc_buff = zeros(simpar.states.nxfe, nstep_ibc_aid);
 ztilde_ibc_buff = zeros(1,nstep_ibc_aid);
 ztildehat_ibc_buff = zeros(1,nstep_ibc_aid);
+del_x_gps_buff = zeros(simpar.states.nxfe, nstep_gps_aid);
 %% Initialize the navigation covariance matrix
 P_buff(:,:,1) = initialize_covariance(simpar);
 %% Initialize the truth state vector
@@ -87,6 +90,9 @@ R_gps = gps.compute_R(simpar);
 
 % Compute PDOA measurement noise scalar
 R_ibc = ibc.compute_R(simpar);
+
+G_gps = eye(3);
+G_ibc = eye(1);
 
 %Initialize the measurement counters
 k_gps = 1;
@@ -158,7 +164,7 @@ for i=2:nstep
     end
     
     % If GPS discrete measurements are available, perform a Kalman update
-    if abs(t(i)-t_kalman_gps(k_gps+1)) < simpar.general.dt*0.01
+    if t(i)-t_kalman_gps(k_gps+1) >= 0
         %   Check error state propagation if simpar.general.errorPropTestEnable = true
         if simpar.general.errorPropTestEnable
             checkErrorPropagation(truth2nav(x_buff(:,i),simpar), xhat_buff(:,i),...
@@ -187,14 +193,14 @@ for i=2:nstep
             end
             res_gps(:,k_gps) = gps.compute_residual(ztilde_gps_buff(:,k_gps), ztildehat_gps_buff(:,k_gps));
             resCov_gps(:,:,k_gps) = compute_residual_cov(H_gps, P_buff(:,:,i),R_gps);
-            K_gps_buff(:,:,k_gps) = compute_Kalman_gain(H_gps, P_buff(:,:,i), R_gps);
-            del_x = estimate_error_state_vector(K_gps_buff(:,:,k_gps), ztilde_gps_buff(:,k_gps), ztildehat_gps_buff(:,k_gps));
-            P_buff(:,:,i) = update_covariance(P_buff(:,:,i), K_gps_buff(:,:,k_gps), H_gps, R_gps, simpar);
-            xhat_buff(:,i) = correctErrors(xhat_buff(:,i), del_x, simpar);
+            K_gps_buff(:,:,k_gps) = compute_Kalman_gain(H_gps, P_buff(:,:,i), R_gps, G_gps);
+            del_x_gps_buff(:,k_gps) = estimate_error_state_vector(K_gps_buff(:,:,k_gps), ztilde_gps_buff(:,k_gps), ztildehat_gps_buff(:,k_gps));
+            P_buff(:,:,i) = update_covariance(P_buff(:,:,i), K_gps_buff(:,:,k_gps), H_gps, R_gps, G_gps, simpar);
+            xhat_buff(:,i) = correctErrors(xhat_buff(:,i), del_x_gps_buff(:,k_gps), simpar);
         end
     end
     % If IBC discrete measurements are available, perform a Kalman update
-    if abs(t(i)-t_kalman_ibc(k_ibc+1)) < simpar.general.dt*0.01
+    if t(i)-t_kalman_ibc(k_ibc+1) >= 0
         %   Check error state propagation if simpar.general.errorPropTestEnable = true
         if simpar.general.errorPropTestEnable
             checkErrorPropagation(truth2nav(x_buff(:,i),simpar), xhat_buff(:,i),...
@@ -215,18 +221,18 @@ for i=2:nstep
         %       Update and save the covariance matrix
         %       Correct and save the navigation states
         if simpar.general.process_IBC_enable
-            ztilde_ibc_buff(:,k_ibc) = ibc.synthesize_measurement(truth2nav(x_buff(:,i), simpar), simpar);
+            ztilde_ibc_buff(:,k_ibc) = ibc.synthesize_measurement(truth2nav(x_buff(:,i), simpar), simpar, R_ibc);
             ztildehat_ibc_buff(:,k_ibc) = ibc.predict_measurement(xhat_buff(:,i), simpar);
-            H_ibc = ibc.compute_H(xhat_buff(:,i), simpar);
+            H_ibc_buff(k_ibc,:) = ibc.compute_H(xhat_buff(:,i), simpar);
             if simpar.general.measLinearizationCheckEnable
                 ibc.validate_linearization(x_buff(:,i), simpar);
             end
             res_ibc(:,k_ibc) = ibc.compute_residual(ztilde_ibc_buff(:,k_ibc), ztildehat_ibc_buff(:,k_ibc));
-            resCov_ibc(:,k_ibc) = compute_residual_cov(H_ibc, P_buff(:,:,i),R_ibc);
-            K_ibc_buff(:,:,k_ibc) = compute_Kalman_gain(H_ibc, P_buff(:,:,i), R_ibc);
-            del_x = estimate_error_state_vector(K_ibc_buff(:,:,k_ibc), ztilde_ibc_buff(:,k_ibc), ztildehat_ibc_buff(:,k_ibc));
-            P_buff(:,:,i) = update_covariance(P_buff(:,:,i), K_ibc_buff(:,:,k_ibc), H_ibc, R_ibc, simpar);
-            xhat_buff(:,i) = correctErrors(xhat_buff(:,i), del_x, simpar);
+            resCov_ibc(:,:,k_ibc) = compute_residual_cov(H_ibc_buff(k_ibc,:), P_buff(:,:,i),R_ibc);
+            K_ibc_buff(:,k_ibc) = compute_Kalman_gain(H_ibc_buff(k_ibc,:), P_buff(:,:,i), R_ibc, G_ibc);
+            del_x_ibc_buff(:,k_ibc) = estimate_error_state_vector(K_ibc_buff(:,k_ibc), ztilde_ibc_buff(:,k_ibc), ztildehat_ibc_buff(:,k_ibc));
+            P_buff(:,:,i) = update_covariance(P_buff(:,:,i), K_ibc_buff(:,k_ibc), H_ibc_buff(k_ibc,:), R_ibc, G_ibc, simpar);
+            xhat_buff(:,i) = correctErrors(xhat_buff(:,i), del_x_ibc_buff(:,k_ibc), simpar);
         end
     end
     if verbose && mod(i,100) == 0
@@ -246,6 +252,10 @@ navRes.gps = res_gps;
 kalmanGains.ibc = K_ibc_buff;
 kalmanGains.gps = K_gps_buff;
 
+% Package up estimated state errors
+del_x_ibc = del_x_ibc_buff;
+del_x_gps = del_x_gps_buff;
+
 %Package up outputs
 traj = struct('navState',xhat_buff,...
     'navCov',P_buff,...
@@ -261,5 +271,7 @@ traj = struct('navState',xhat_buff,...
     'kalmanGain',kalmanGains,...
     'simpar',simpar,...
     'meas_ibc', ztilde_ibc_buff,...
-    'pred_ibc', ztildehat_ibc_buff);
+    'pred_ibc', ztildehat_ibc_buff,...
+    'del_x_ibc', del_x_ibc,...
+    'del_x_gps', del_x_gps);
 end
